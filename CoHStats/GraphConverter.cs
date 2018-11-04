@@ -36,9 +36,14 @@ namespace CoHStats {
             }
             var dataset = _playerStats[player];
 
-            var infantryKills = new List<GraphNodeDto>();
-            var vehicleKills = new List<GraphNodeDto>();
-            var buildingKills = new List<GraphNodeDto>();
+            var zeroNode = new GraphNodeDto {
+                x = 0,
+                y = 0
+            };
+
+            var infantryKills = new List<GraphNodeDto> { zeroNode };
+            var vehicleKills = new List<GraphNodeDto> { zeroNode };
+            var buildingKills = new List<GraphNodeDto> { zeroNode };
 
             int prevInfantryKilled = 0;
             int prevVehiclesKilled = 0;
@@ -48,19 +53,19 @@ namespace CoHStats {
                 var idx = Math.Min(i, dataset.Count - 1);
 
                 infantryKills.Add(new GraphNodeDto {
-                        x = idx,
+                        x = 1 + idx,
                         y = dataset[idx].InfantryKilled - prevInfantryKilled // Delta
                     }
                 );
 
                 vehicleKills.Add(new GraphNodeDto {
-                        x = idx,
+                        x = 1 + idx,
                         y = dataset[idx].VehiclesDestroyed - prevVehiclesKilled // Delta
                 }
                 );
 
                 buildingKills.Add(new GraphNodeDto {
-                        x = idx,
+                        x = 1 + idx,
                         y = dataset[idx].BuildingsDestroyed - prevBuildingsDestroyed // Delta
                 }
                 );
