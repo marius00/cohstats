@@ -61,6 +61,8 @@ namespace CoHStats {
 
                 _graphConverter.Add(_gameReader.FetchStats(Player.One), Player.One);
                 _graphConverter.Add(_gameReader.FetchStats(Player.Two), Player.Two);
+                _graphConverter.Add(_gameReader.FetchStats(Player.Three), Player.Three);
+                _graphConverter.Add(_gameReader.FetchStats(Player.Four), Player.Four);
                 pojo.GraphJson = _graphConverter.ToJson(_selectedPlayer, _stepSize);
             };
             timerReportUsage.Interval = 1000;

@@ -8,7 +8,7 @@ namespace CoHStats {
     public class PlayerStats {
         public int TotalKilled { get; set; }
         public int InfantryKilled { get; set; }
-        public int TanksKilled { get; set; }
+        public int VehiclesDestroyed { get; set; }
         public int BuildingsDestroyed { get; set; }
     }
 }

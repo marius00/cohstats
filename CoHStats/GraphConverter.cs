@@ -40,30 +40,34 @@ namespace CoHStats {
             var vehicleKills = new List<GraphNodeDto>();
             var buildingKills = new List<GraphNodeDto>();
 
-            int prev = 0;
+            int prevInfantryKilled = 0;
+            int prevVehiclesKilled = 0;
+            int prevBuildingsDestroyed = 0;
             for (int i = 0; i < dataset.Count; i+= stepSize) { // Since we got the 'total', aggregating data into steps is as easy as skippingover.
                 // If dataset.length % 3 != 0, then this ensures we don't go over bounds in the array.
                 var idx = Math.Min(i, dataset.Count - 1);
 
                 infantryKills.Add(new GraphNodeDto {
                         x = idx,
-                        y = dataset[idx].InfantryKilled - prev // Delta
+                        y = dataset[idx].InfantryKilled - prevInfantryKilled // Delta
                     }
                 );
 
                 vehicleKills.Add(new GraphNodeDto {
                         x = idx,
-                        y = 0
-                    }
+                        y = dataset[idx].VehiclesDestroyed - prevVehiclesKilled // Delta
+                }
                 );
 
                 buildingKills.Add(new GraphNodeDto {
                         x = idx,
-                        y = 0
-                    }
+                        y = dataset[idx].BuildingsDestroyed - prevBuildingsDestroyed // Delta
+                }
                 );
 
-                prev = dataset[idx].InfantryKilled;
+                prevInfantryKilled = dataset[idx].InfantryKilled;
+                prevVehiclesKilled = dataset[idx].VehiclesDestroyed;
+                prevBuildingsDestroyed = dataset[idx].BuildingsDestroyed;
             }
 
             var result = new List<List<GraphNodeDto>>() {

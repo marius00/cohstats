@@ -43,8 +43,8 @@ class App extends React.Component {
         <select onChange={this.handleChange}>
           <option value={1}>Player #1</option>
           <option value={2}>Player #2</option>
-          <option value={3}>Player #3 - Broken</option>
-          <option value={4}>Player #4 - Broken</option>
+          <option value={3}>Player #3</option>
+          <option value={4}>Player #4</option>
         </select>
         <select onChange={this.setTimeAggregation}>
           <option value={1}>Every second</option>
