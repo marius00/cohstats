@@ -22,7 +22,6 @@ namespace CoHStats {
         private readonly GameReader _gameReader = new GameReader();
         private readonly GraphConverter _graphConverter = new GraphConverter();
         private readonly bool _showDevtools;
-        private Player _selectedPlayer = Player.One;
         private int _stepSize = 3;
 
         public Form1(bool showDevtools) {
@@ -32,9 +31,8 @@ namespace CoHStats {
 
         private void Form1_Load(object sender, EventArgs e) {
             var pojo = new WebViewJsPojo {
-                GraphJson = _graphConverter.ToJson(Player.One, _stepSize) // Initial data will be empty, this is fine.
+                GraphJson = _graphConverter.ToJson(_stepSize) // Initial data will be empty, this is fine.
             };
-            pojo.OnUpdatePlayer += (o, args) => { _selectedPlayer = (args as UpdatePlayerArg).Player; };
             pojo.OnUpdateTimeAggregation += (o, args) => { _stepSize = (args as TimeStepArg).StepSize; };
 
             string url;
@@ -59,11 +57,13 @@ namespace CoHStats {
                 if (Thread.CurrentThread.Name == null)
                     Thread.CurrentThread.Name = "Data";
 
-                _graphConverter.Add(_gameReader.FetchStats(Player.One), Player.One);
-                _graphConverter.Add(_gameReader.FetchStats(Player.Two), Player.Two);
-                _graphConverter.Add(_gameReader.FetchStats(Player.Three), Player.Three);
-                _graphConverter.Add(_gameReader.FetchStats(Player.Four), Player.Four);
-                pojo.GraphJson = _graphConverter.ToJson(_selectedPlayer, _stepSize);
+                if (_gameReader.IsActive) {
+                    _graphConverter.Add(_gameReader.FetchStats(Player.One), Player.One);
+                    _graphConverter.Add(_gameReader.FetchStats(Player.Two), Player.Two);
+                    _graphConverter.Add(_gameReader.FetchStats(Player.Three), Player.Three);
+                    _graphConverter.Add(_gameReader.FetchStats(Player.Four), Player.Four);
+                    pojo.GraphJson = _graphConverter.ToJson(_stepSize);
+                }
             };
             timerReportUsage.Interval = 1000;
             timerReportUsage.AutoReset = true;

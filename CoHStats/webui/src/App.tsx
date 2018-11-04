@@ -4,32 +4,24 @@ import {AreaChart, LineData} from 'react-easy-chart';
 
 // tslint:disable-next-line
 declare abstract class GlobalMagic {
-  public static refresh(points: Array<Array<LineData>>): void;
-  public static setPlayer(index: string): void;
+  public static refresh(points: Array<Array<Array<LineData>>>): void;
   public static setTimeAggregation(index: string): void;
 }
 
 class App extends React.Component {
   state = {
-    r: 0,
-    points: [] as Array<Array<LineData>>
+    points: [[],[],[],[]] as Array<Array<Array<LineData>>>
   };
 
   constructor(props: any) {
     super(props);
     if (typeof GlobalMagic === 'object') {
-      GlobalMagic.refresh = (points: Array<Array<LineData>>) => {
-        console.log('Setting dummy state to trigger graph refresh');
+      GlobalMagic.refresh = (points: Array<Array<Array<LineData>>>) => {
         this.setState({
-          points: points,
-          r: new Date().getTime()
+          points: points
         });
       };
     }
-  }
-
-  handleChange(event: any) {
-    GlobalMagic.setPlayer(event.target.value);
   }
 
   setTimeAggregation(event: any) {
@@ -40,12 +32,6 @@ class App extends React.Component {
     return (
       <div className="App">
         <h1>Company of Heroes - Kill Statistics</h1>
-        <select onChange={this.handleChange}>
-          <option value={1}>Player #1</option>
-          <option value={2}>Player #2</option>
-          <option value={3}>Player #3</option>
-          <option value={4}>Player #4</option>
-        </select>
         <select onChange={this.setTimeAggregation}>
           <option value={1}>Every second</option>
           <option value={2}>Every two seconds</option>
@@ -56,6 +42,7 @@ class App extends React.Component {
           <option value={30}>Every 30 seconds</option>
           <option value={60}>Every minute</option>
         </select>
+        <h2>Player #1</h2>
         <AreaChart
           axes={true}
           margin={{top: 10, right: 10, bottom: 50, left: 50}}
@@ -64,7 +51,40 @@ class App extends React.Component {
           grid={true}
           width={1680}
           height={250}
-          data={this.state.points}
+          data={this.state.points[0]}
+        />
+        <h2>Player #2</h2>
+        <AreaChart
+          axes={true}
+          margin={{top: 10, right: 10, bottom: 50, left: 50}}
+          axisLabels={{x: 'Time', y: 'Number of Kills'}}
+          interpolate={'cardinal'}
+          grid={true}
+          width={1680}
+          height={250}
+          data={this.state.points[1]}
+        />
+        <h2>Player #3</h2>
+        <AreaChart
+          axes={true}
+          margin={{top: 10, right: 10, bottom: 50, left: 50}}
+          axisLabels={{x: 'Time', y: 'Number of Kills'}}
+          interpolate={'cardinal'}
+          grid={true}
+          width={1680}
+          height={250}
+          data={this.state.points[2]}
+        />
+        <h2>Player #4</h2>
+        <AreaChart
+          axes={true}
+          margin={{top: 10, right: 10, bottom: 50, left: 50}}
+          axisLabels={{x: 'Time', y: 'Number of Kills'}}
+          interpolate={'cardinal'}
+          grid={true}
+          width={1680}
+          height={250}
+          data={this.state.points[3]}
         />
       </div>
     );

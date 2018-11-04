@@ -13,9 +13,6 @@ In the pointer scan, scan to the new address, and repeat.. after 3-4 games, the 
 
 
 #### TODO:
-* No support for player #3 and #4
-* Show vehicle and building kills
-* Explain how to find the offsets, and how the data looks. (in case of a patch)
 * Saving/loading of stats (why? I dunno. For development if nothing else.)
 * Possible to auto detect which player is using the tool?
 

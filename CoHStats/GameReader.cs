@@ -32,8 +32,12 @@ namespace CoHStats {
         private IntPtr _processHandle;
         private int _ptr = 0;
 
-        private void Initialize() {
+        private bool Initialize() {
             var candidates = Process.GetProcessesByName("RelicCOH");
+            if (candidates.Length == 0) {
+                return false;
+            }
+
             Process process = candidates[0];
             _processHandle = OpenProcess(ProcessWmRead, false, process.Id);
 
@@ -49,11 +53,17 @@ namespace CoHStats {
                     _ptr = BitConverter.ToInt32(buffer, 0);
                 }
             }
+
+            return true;
         }
+
+        public bool IsActive => _ptr != 0;
 
         public PlayerStats FetchStats(Player player) {
             if (_ptr == 0) {
-                Initialize();
+                if (!Initialize()) {
+                    return null;
+                }
             }
             
             int bytesRead = 0;
@@ -62,22 +72,13 @@ namespace CoHStats {
             ReadProcessMemory((int) _processHandle, _ptr + (int)player, buffer, buffer.Length, ref bytesRead);
             int numKills = BitConverter.ToInt32(buffer, 0);
 
-            //ReadProcessMemory((int)_processHandle, _ptr + (int)player + 4, buffer, buffer.Length, ref bytesRead);
-            // Logger.Debug($"+ 4: {BitConverter.ToInt32(buffer, 0)}"); // Not relevant, flipping 0 <-> 2
-
             ReadProcessMemory((int)_processHandle, _ptr + (int)player + 8, buffer, buffer.Length, ref bytesRead);
             int numVehicleKills = BitConverter.ToInt32(buffer, 0);
-            // Logger.Debug($"+ 8: {BitConverter.ToInt32(buffer, 0)}");
-
-            // ReadProcessMemory((int)_processHandle, _ptr + (int)player + 12, buffer, buffer.Length, ref bytesRead);
-            //Logger.Debug($"+12: {BitConverter.ToInt32(buffer, 0)}"); // Not relevant, often "2"
 
             ReadProcessMemory((int)_processHandle, _ptr + (int)player + 16, buffer, buffer.Length, ref bytesRead);
             int numBuildingsDestroyed = BitConverter.ToInt32(buffer, 0);
-            // Logger.Debug($"+16: {BitConverter.ToInt32(buffer, 0)}");
 
             ReadProcessMemory((int)_processHandle, _ptr + (int)player + 20, buffer, buffer.Length, ref bytesRead);
-            Logger.Debug($"+20: {BitConverter.ToInt32(buffer, 0)}");
 
             return new PlayerStats {
                 InfantryKilled = numKills,
