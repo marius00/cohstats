@@ -21,15 +21,16 @@ namespace CoHStats {
         private readonly CefBrowserHandler _browser = new CefBrowserHandler();
         private readonly GameReader _gameReader = new GameReader();
         private readonly GraphConverter _graphConverter = new GraphConverter();
+        private readonly bool _showDevtools;
         private Player _selectedPlayer = Player.One;
         private int _stepSize = 3;
 
-        public Form1() {
+        public Form1(bool showDevtools) {
             InitializeComponent();
+            this._showDevtools = showDevtools;
         }
 
         private void Form1_Load(object sender, EventArgs e) {
-            // _browser.BrowserControl.TopLevel = false;
             var pojo = new WebViewJsPojo {
                 GraphJson = _graphConverter.ToJson(Player.One, _stepSize) // Initial data will be empty, this is fine.
             };
@@ -44,7 +45,7 @@ namespace CoHStats {
 #endif
             Logger.Info($"Running with UI: {url}");
 
-            _browser.InitializeChromium(url, pojo);
+            _browser.InitializeChromium(url, pojo, _showDevtools);
             this.Controls.Add(_browser.BrowserControl);
             _browser.BrowserControl.Show();
 

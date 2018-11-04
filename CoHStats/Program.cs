@@ -15,17 +15,23 @@ namespace CoHStats {
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main() {
+        static void Main(string[] args) {
             var version = Assembly.GetExecutingAssembly().GetName().Version;
             DateTime buildDate = new DateTime(2000, 1, 1)
                 .AddDays(version.Build)
                 .AddSeconds(version.Revision * 2);
 
             Logger.InfoFormat("Running version {0}.{1}.{2}.{3} from {4:dd/MM/yyyy}", version.Major, version.Minor, version.Build, version.Revision, buildDate);
-            
+
+            bool showDevtools;
+#if DEBUG
+            showDevtools = true;
+#else
+            showDevtools = args != null && args.Length > 0 && args.Any(x => x.Contains("devtools"));
+#endif
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            Application.Run(new Form1(showDevtools));
         }
     }
 }

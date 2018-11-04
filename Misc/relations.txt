@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable>
+  <CheatEntries>
+    <CheatEntry>
+      <ID>0</ID>
+      <Description>"Total kills"</Description>
+      <VariableType>4 Bytes</VariableType>
+      <Address>132BCD58</Address>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>1</ID>
+      <Description>"My inf kills"</Description>
+      <VariableType>4 Bytes</VariableType>
+      <Address>132BCD5C</Address>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>2</ID>
+      <Description>"No description"</Description>
+      <VariableType>4 Bytes</VariableType>
+      <Address>132BCD60</Address>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>3</ID>
+      <Description>"His inf. losses"</Description>
+      <VariableType>4 Bytes</VariableType>
+      <Address>132BCFB8</Address>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>4</ID>
+      <Description>"No description"</Description>
+      <VariableType>4 Bytes</VariableType>
+      <Address>132BCFBC</Address>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>5</ID>
+      <Description>"#2 My total kills"</Description>
+      <VariableType>4 Bytes</VariableType>
+      <Address>658C27B0</Address>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>6</ID>
+      <Description>"#2 My inf kills"</Description>
+      <VariableType>4 Bytes</VariableType>
+      <Address>658C27B4</Address>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>7</ID>
+      <Description>"#2 His losses"</Description>
+      <VariableType>4 Bytes</VariableType>
+      <Address>658C2A10</Address>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>8</ID>
+      <Description>"No description"</Description>
+      <VariableType>4 Bytes</VariableType>
+      <Address>109EFD24</Address>
+    </CheatEntry>
+  </CheatEntries>
+</CheatTable>
+
+
+
+3 entries & 2 entries
+int, int int
+...
+int,int

@@ -47,7 +47,7 @@ namespace CoHStats {
             }
         }
 
-        public void InitializeChromium(string startPage, WebViewJsPojo bindeable) {
+        public void InitializeChromium(string startPage, WebViewJsPojo bindeable, bool showDevtools) {
             this.JsPojo = bindeable;
 
             try {
@@ -59,7 +59,9 @@ namespace CoHStats {
                 _browser = new ChromiumWebBrowser(startPage);
 
                 _browser.RegisterJsObject("data", bindeable);
-                _browser.IsBrowserInitializedChanged += (sender, args) => _browser.ShowDevTools();
+                if (showDevtools) {
+                    _browser.IsBrowserInitializedChanged += (sender, args) => _browser.ShowDevTools();
+                }
 
                 //browser.RequestHandler = new TransferUrlHijack { TransferMethod = transferItem };
                 Logger.Info("Chromium created..");

@@ -17,7 +17,8 @@ In the pointer scan, scan to the new address, and repeat.. after 3-4 games, the 
 * Show vehicle and building kills
 * Explain how to find the offsets, and how the data looks. (in case of a patch)
 
-
+#### Usage
+Devtools can be enabled by providing the "-devtools" argument when launching the application.
 
 
 

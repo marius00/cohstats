@@ -2,6 +2,7 @@
   "name": "webui",
   "version": "0.1.0",
   "private": true,
+  "homepage": ".",
   "dependencies": {
     "@types/react-easy-chart": "^0.1.4",
     "react": "^16.6.0",
