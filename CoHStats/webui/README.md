@@ -13,6 +13,8 @@ In the pointer scan, scan to the new address, and repeat.. after 3-4 games, the 
 
 
 #### TODO:
+* Stop button - Stop reading data until reset
+* Reset button (reset current stats and start a new scan for data locations, eg new game)
 * Saving/loading of stats (why? I dunno. For development if nothing else.)
 * Possible to auto detect which player is using the tool?
 

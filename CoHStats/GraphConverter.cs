@@ -8,8 +8,7 @@ using Newtonsoft.Json;
 
 namespace CoHStats {
     public class GraphConverter {
-        private readonly Dictionary<Player, List<PlayerStats>> _playerStats =
-            new Dictionary<Player, List<PlayerStats>>();
+        private readonly Dictionary<Player, List<PlayerStats>> _playerStats = new Dictionary<Player, List<PlayerStats>>();
 
         private readonly JsonSerializerSettings _settings;
 
@@ -27,7 +26,9 @@ namespace CoHStats {
                 _playerStats[player] = new List<PlayerStats>();
             }
 
-            _playerStats[player].Add(stats);
+            if (stats != null) {
+                _playerStats[player].Add(stats);
+            }
         }
 
         public string ToJson(int stepSize) {

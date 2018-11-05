@@ -17,8 +17,7 @@ namespace CoHStats {
         public static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
 
         [DllImport("kernel32.dll")]
-        public static extern bool ReadProcessMemory(int hProcess, int lpBaseAddress, byte[] lpBuffer, int dwSize,
-            ref int lpNumberOfBytesRead);
+        public static extern bool ReadProcessMemory(int hProcess, int lpBaseAddress, byte[] lpBuffer, int dwSize, ref int lpNumberOfBytesRead);
 
         private readonly List<int> _offsets = new List<int> {
             0x901EB8,
@@ -57,7 +56,15 @@ namespace CoHStats {
             return true;
         }
 
-        public bool IsActive => _ptr != 0;
+        public bool IsActive {
+            get {
+                if (_ptr == 0) {
+                    Initialize();
+                }
+
+                return _ptr != 0;
+            }
+        }
 
         public PlayerStats FetchStats(Player player) {
             if (_ptr == 0) {
@@ -69,16 +76,24 @@ namespace CoHStats {
             int bytesRead = 0;
             byte[] buffer = new byte[4];
 
-            ReadProcessMemory((int) _processHandle, _ptr + (int)player, buffer, buffer.Length, ref bytesRead);
+            if (!ReadProcessMemory((int) _processHandle, _ptr + (int)player, buffer, buffer.Length, ref bytesRead)) {
+                return null;
+            }
             int numKills = BitConverter.ToInt32(buffer, 0);
 
-            ReadProcessMemory((int)_processHandle, _ptr + (int)player + 8, buffer, buffer.Length, ref bytesRead);
+            if (!ReadProcessMemory((int)_processHandle, _ptr + (int)player + 8, buffer, buffer.Length, ref bytesRead)) {
+                return null;
+            }
             int numVehicleKills = BitConverter.ToInt32(buffer, 0);
 
-            ReadProcessMemory((int)_processHandle, _ptr + (int)player + 16, buffer, buffer.Length, ref bytesRead);
+            if (!ReadProcessMemory((int)_processHandle, _ptr + (int)player + 16, buffer, buffer.Length, ref bytesRead)) {
+                return null;
+            }
             int numBuildingsDestroyed = BitConverter.ToInt32(buffer, 0);
 
-            ReadProcessMemory((int)_processHandle, _ptr + (int)player + 20, buffer, buffer.Length, ref bytesRead);
+            if (!ReadProcessMemory((int)_processHandle, _ptr + (int)player + 20, buffer, buffer.Length, ref bytesRead)) {
+                return null;
+            }
 
             return new PlayerStats {
                 InfantryKilled = numKills,
