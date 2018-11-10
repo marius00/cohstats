@@ -91,8 +91,8 @@ class App extends React.Component {
     return (
       <div className="App">
         <h1>Company of Heroes - Kill Statistics</h1>
-        {this.renderAggregate(this.state.humanAiGraph.playerKills, this.state.humanAiGraph.playerLabel)}
-        {this.renderAggregate(this.state.humanAiGraph.cpuKills, 'AI')}
+        {this.state.humanAiGraph.playerKills.length > 1 && this.renderAggregate(this.state.humanAiGraph.playerKills, this.state.humanAiGraph.playerLabel)}
+        {this.state.humanAiGraph.cpuKills.length > 1 && this.renderAggregate(this.state.humanAiGraph.cpuKills, 'AI')}
         {this.state.dataset.map((elem, idx) => this.renderPlayer(idx))}
       </div>
     );

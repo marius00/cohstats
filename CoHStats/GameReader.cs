@@ -44,7 +44,7 @@ namespace CoHStats {
 
         private static bool IsValidString(string s) {
             Regex r = new Regex("[^A-Za-z0-9$ ]$");
-            return !r.IsMatch(s.Substring(0, 1));
+            return s.Length > 1 && !r.IsMatch(s.Substring(0, 1));
         }
 
         private bool Initialize() {
