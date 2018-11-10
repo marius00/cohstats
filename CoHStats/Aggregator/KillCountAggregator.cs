@@ -20,13 +20,13 @@ namespace CoHStats.Aggregator {
 
         private bool IsCpu(string name) => name.Contains("CPU") && name.Contains("-");
 
-        public void Add(int totalKills, string name) {
+        public void Add(int totalKills, Player p, string name) {
             if (!string.IsNullOrEmpty(name)) {
-                if (!IsCpu(name)) {
-                    _killsPerDistinctPlayer[name] = totalKills;
+                if (IsCpu(name)) {
+                    _killsPerDistinctCpu[name] = totalKills;
                 }
                 else {
-                    _killsPerDistinctCpu[name] = totalKills;
+                    _killsPerDistinctPlayer[name + p] = totalKills;
                 }
             }
 

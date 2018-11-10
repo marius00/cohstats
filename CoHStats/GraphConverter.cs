@@ -35,7 +35,7 @@ namespace CoHStats {
             if (stats.InfantryKilled < 100000) {
                 _playerStats[player].Add(stats);
                 if (_playerNames.ContainsKey(player)) {
-                    _killCountAggregator.Add(stats.TotalKilled, _playerNames[player]);
+                    _killCountAggregator.Add(stats.TotalKilled, player, _playerNames[player]);
                 }
             }
             else {
