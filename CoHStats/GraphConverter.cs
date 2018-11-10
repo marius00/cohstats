@@ -45,7 +45,7 @@ namespace CoHStats {
         }
 
         public void Tick() {
-            foreach (var player in new[] {Player.One, Player.Two, Player.Three, Player.Four}) {
+            foreach (var player in new[] {Player.One, Player.Two, Player.Three, Player.Four, Player.Five, Player.Six, Player.Seven, Player.Eight }) {
                 // Skip invalids
                 if (_isInvalidPlayer.ContainsKey(player)) {
                     continue;
@@ -83,7 +83,7 @@ namespace CoHStats {
         public string ToJson() {
             List<GraphMapper> result = new List<GraphMapper>();
 
-            foreach (var player in new[] {Player.One, Player.Two, Player.Three, Player.Four}) {
+            foreach (var player in new[] {Player.One, Player.Two, Player.Three, Player.Four, Player.Five, Player.Six, Player.Seven, Player.Eight}) {
                 if (!_playerStats.ContainsKey(player)) {
                     _playerStats[player] = new List<PlayerStats>();
                 }

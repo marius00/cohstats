@@ -64,7 +64,7 @@ class App extends React.Component {
     if (this.state.dataset.length > idx) {
       const p1 = this.state.dataset[idx];
       return (
-        <div>
+        <div key={'player-graph-' + idx}>
           {p1.isValidPlayer && p1.graph.length > 0 &&
           <div>
             <h2>{p1.name}</h2>
@@ -93,10 +93,7 @@ class App extends React.Component {
         <h1>Company of Heroes - Kill Statistics</h1>
         {this.renderAggregate(this.state.humanAiGraph.playerKills, this.state.humanAiGraph.playerLabel)}
         {this.renderAggregate(this.state.humanAiGraph.cpuKills, 'AI')}
-        {this.renderPlayer(0)}
-        {this.renderPlayer(1)}
-        {this.renderPlayer(2)}
-        {this.renderPlayer(3)}
+        {this.state.dataset.map((elem, idx) => this.renderPlayer(idx))}
       </div>
     );
   }

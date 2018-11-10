@@ -23,10 +23,10 @@ namespace CoHStats.Aggregator {
         public void Add(int totalKills, Player p, string name) {
             if (!string.IsNullOrEmpty(name)) {
                 if (IsCpu(name)) {
-                    _killsPerDistinctCpu[name] = totalKills;
+                    _killsPerDistinctCpu[name + p] = totalKills;
                 }
                 else {
-                    _killsPerDistinctPlayer[name + p] = totalKills;
+                    _killsPerDistinctPlayer[name] = totalKills;
                 }
             }
 
