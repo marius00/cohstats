@@ -1,38 +1,76 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Windows.Forms;
 using CoHStats.Integration;
+using log4net;
 using Newtonsoft.Json;
 
 namespace CoHStats {
     public class GraphConverter {
+        private static readonly ILog Logger = LogManager.GetLogger(typeof(GraphConverter));
+
         private readonly Dictionary<Player, List<PlayerStats>> _playerStats = new Dictionary<Player, List<PlayerStats>>();
+        // Make a Player aggregate object?
+        private readonly Dictionary<Player, bool> _isInvalidPlayer = new Dictionary<Player, bool>();
+        private readonly Dictionary<Player, string> _playerNames = new Dictionary<Player, string>();
+        private readonly GameReader _gameReader;
 
         private readonly JsonSerializerSettings _settings;
 
-        public GraphConverter() {
+        public GraphConverter(GameReader gameReader) {
             _settings = new JsonSerializerSettings {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
                 Culture = System.Globalization.CultureInfo.InvariantCulture,
                 ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
             };
+
+            _gameReader = gameReader;
         }
 
 
-        public void Add(PlayerStats stats, Player player) {
-            if (!_playerStats.ContainsKey(player)) {
-                _playerStats[player] = new List<PlayerStats>();
-            }
-
-            if (stats != null) {
+        private void Add(PlayerStats stats, Player player) {
+            if (stats.InfantryKilled < 100000) {
                 _playerStats[player].Add(stats);
             }
+            else {
+                Logger.Warn($"Invalidating player {player}, detected {stats.InfantryKilled} infantry kills.");
+                _isInvalidPlayer[player] = true;
+            }
         }
 
-        public string ToJson(int stepSize) {
-            List<List<List<GraphNodeDto>>> result = new List<List<List<GraphNodeDto>>>();
+        public void Tick() {
+            foreach (var player in new[] {Player.One, Player.Two, Player.Three, Player.Four}) {
+                // Skip invalids
+                if (_isInvalidPlayer.ContainsKey(player)) {
+                    continue;
+                }
+
+                if (!_playerStats.ContainsKey(player)) {
+                    _playerStats[player] = new List<PlayerStats>();
+                }
+
+                if (!_playerNames.ContainsKey(player)) {
+                    _playerNames[player] = _gameReader.GetPlayerName(player);
+                    if (string.IsNullOrEmpty(_playerNames[player])) {
+                        _isInvalidPlayer[player] = true;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(_playerNames[player])) {
+
+                    // Add new data
+                    var stats = _gameReader.FetchStats(player);
+                    if (stats != null) {
+                        Add(stats, player);
+                    }
+                }
+            }
+        }
+
+        public string ToJson() {
+            List<GraphMapper> result = new List<GraphMapper>();
+
             foreach (var player in new[] {Player.One, Player.Two, Player.Three, Player.Four}) {
                 if (!_playerStats.ContainsKey(player)) {
                     _playerStats[player] = new List<PlayerStats>();
@@ -49,42 +87,32 @@ namespace CoHStats {
                 var vehicleKills = new List<GraphNodeDto> {zeroNode};
                 var buildingKills = new List<GraphNodeDto> {zeroNode};
 
-                int prevInfantryKilled = 0;
-                int prevVehiclesKilled = 0;
-                int prevBuildingsDestroyed = 0;
-                for (int i = 0; i < dataset.Count; i += stepSize) {
-                    // Since we got the 'total', aggregating data into steps is as easy as skippingover.
-                    // If dataset.length % 3 != 0, then this ensures we don't go over bounds in the array.
-                    var idx = Math.Min(i, dataset.Count - 1);
+                infantryKills.AddRange(dataset.Select((e, idx) => new GraphNodeDto {
+                    x = 1 + idx,
+                    y = e.InfantryKilled
+                }));
 
-                    infantryKills.Add(new GraphNodeDto {
-                            x = 1 + idx,
-                            y = dataset[idx].InfantryKilled - prevInfantryKilled // Delta
-                        }
-                    );
+                vehicleKills.AddRange(dataset.Select((e, idx) => new GraphNodeDto {
+                    x = 1 + idx,
+                    y = e.VehiclesDestroyed
+                }));
 
-                    vehicleKills.Add(new GraphNodeDto {
-                            x = 1 + idx,
-                            y = dataset[idx].VehiclesDestroyed - prevVehiclesKilled // Delta
-                        }
-                    );
+                buildingKills.AddRange(dataset.Select((e, idx) => new GraphNodeDto {
+                    x = 1 + idx,
+                    y = e.BuildingsDestroyed
+                }));
 
-                    buildingKills.Add(new GraphNodeDto {
-                            x = 1 + idx,
-                            y = dataset[idx].BuildingsDestroyed - prevBuildingsDestroyed // Delta
-                        }
-                    );
+                GraphMapper entry = new GraphMapper {
+                    Graph = new List<List<GraphNodeDto>> {
+                        infantryKills,
+                        vehicleKills,
+                        buildingKills
+                    },
+                    IsValidPlayer = !_isInvalidPlayer.ContainsKey(player) && _playerNames.ContainsKey(player) && !string.IsNullOrEmpty(_playerNames[player]),
+                    Name = _playerNames.ContainsKey(player) ? _playerNames[player] : string.Empty
+                };
 
-                    prevInfantryKilled = dataset[idx].InfantryKilled;
-                    prevVehiclesKilled = dataset[idx].VehiclesDestroyed;
-                    prevBuildingsDestroyed = dataset[idx].BuildingsDestroyed;
-                }
-
-                result.Add(new List<List<GraphNodeDto>> {
-                    infantryKills,
-                    vehicleKills,
-                    buildingKills
-                });
+                result.Add(entry);
             }
 
             return JsonConvert.SerializeObject(result, _settings);

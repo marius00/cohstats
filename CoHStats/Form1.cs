@@ -13,27 +13,25 @@ using System.Windows.Forms;
 using CefSharp;
 using CoHStats.Integration;
 using log4net;
-using Timer = System.Threading.Timer;
 
 namespace CoHStats {
     public partial class Form1 : Form {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(Form1));
         private readonly CefBrowserHandler _browser = new CefBrowserHandler();
         private readonly GameReader _gameReader = new GameReader();
-        private readonly GraphConverter _graphConverter = new GraphConverter();
+        private readonly GraphConverter _graphConverter;
         private readonly bool _showDevtools;
-        private int _stepSize = 3;
 
         public Form1(bool showDevtools) {
             InitializeComponent();
             this._showDevtools = showDevtools;
+            _graphConverter = new GraphConverter(_gameReader);
         }
 
         private void Form1_Load(object sender, EventArgs e) {
             var pojo = new WebViewJsPojo {
-                GraphJson = _graphConverter.ToJson(_stepSize) // Initial data will be empty, this is fine.
+                GraphJson = _graphConverter.ToJson() // Initial data will be empty, this is fine.
             };
-            pojo.OnUpdateTimeAggregation += (o, args) => { _stepSize = (args as TimeStepArg).StepSize; };
 
             string url;
 #if DEBUG
@@ -58,11 +56,8 @@ namespace CoHStats {
                     Thread.CurrentThread.Name = "Data";
 
                 if (_gameReader.IsActive) {
-                    _graphConverter.Add(_gameReader.FetchStats(Player.One), Player.One);
-                    _graphConverter.Add(_gameReader.FetchStats(Player.Two), Player.Two);
-                    _graphConverter.Add(_gameReader.FetchStats(Player.Three), Player.Three);
-                    _graphConverter.Add(_gameReader.FetchStats(Player.Four), Player.Four);
-                    pojo.GraphJson = _graphConverter.ToJson(_stepSize);
+                    _graphConverter.Tick();
+                    pojo.GraphJson = _graphConverter.ToJson();
                 }
             };
             timerReportUsage.Interval = 1000;

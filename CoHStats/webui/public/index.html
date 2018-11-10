@@ -13,16 +13,7 @@
     You need to enable JavaScript to run this app.
 </noscript>
 <script>
-  var GlobalMagic = {
-    setPlayer: (idx) => {
-      console.log("Forwarding setPlayer request to C#, args:", idx);
-      data.setPlayer(idx);
-    },
-    setTimeAggregation: (idx) => {
-      console.log("Forwarding setTimeAggregation request to C#, args:", idx);
-      data.setTimeAggregation(idx);
-    }
-  };
+  var GlobalMagic = {};
 
   // Update the graph in react
   setInterval(function () {

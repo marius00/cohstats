@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using log4net;
@@ -22,7 +23,7 @@ namespace CoHStats {
                 .AddSeconds(version.Revision * 2);
 
             Logger.InfoFormat("Running version {0}.{1}.{2}.{3} from {4:dd/MM/yyyy}", version.Major, version.Minor, version.Build, version.Revision, buildDate);
-
+            
             bool showDevtools;
 #if DEBUG
             showDevtools = true;

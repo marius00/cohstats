@@ -90,6 +90,7 @@
     </Compile>
     <Compile Include="GameReader.cs" />
     <Compile Include="GraphConverter.cs" />
+    <Compile Include="Integration\GraphMapper.cs" />
     <Compile Include="Integration\GraphNodeDto.cs" />
     <Compile Include="Integration\TimeStepArg.cs" />
     <Compile Include="Integration\UpdatePlayerArg.cs" />
