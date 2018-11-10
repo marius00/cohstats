@@ -4,7 +4,18 @@ import {AreaChart, LineData} from 'react-easy-chart';
 
 // tslint:disable-next-line
 declare abstract class GlobalMagic {
-  public static refresh(data: Array<MapperData>): void;
+  public static refresh(data: GraphAggregate): void;
+}
+
+interface HumanAiKillCountAggregate {
+  cpuKills: Array<Array<LineData>>;
+  playerKills: Array<Array<LineData>>;
+  playerLabel: string;
+}
+
+interface GraphAggregate {
+  perPlayerGraph: Array<MapperData>;
+  humanAiGraph: HumanAiKillCountAggregate;
 }
 
 interface MapperData {
@@ -15,20 +26,38 @@ interface MapperData {
 
 class App extends React.Component {
   state = {
-    dataset: [] as Array<MapperData>
-    //points: [[],[],[],[]] as Array<Array<Array<LineData>>>,
-    //isValidPlayer: [true, true, true, true]
+    dataset: [] as Array<MapperData>,
+    humanAiGraph: {cpuKills: [], playerKills: [], playerLabel: ''} as HumanAiKillCountAggregate
   };
 
   constructor(props: any) {
     super(props);
     if (typeof GlobalMagic === 'object') {
-      GlobalMagic.refresh = (data: Array<MapperData>) => {
+      GlobalMagic.refresh = (data: GraphAggregate) => {
         this.setState({
-          dataset: data
+          dataset: data.perPlayerGraph,
+          humanAiGraph: data.humanAiGraph
         });
       };
     }
+  }
+
+  renderAggregate(dataset: LineData[][], label: string) {
+    return (
+      <div>
+        <h2>{label}</h2>
+        <AreaChart
+          axes={true}
+          margin={{top: 10, right: 10, bottom: 50, left: 50}}
+          axisLabels={{x: 'Time', y: 'Number of Kills'}}
+          interpolate={'cardinal'}
+          grid={true}
+          width={window.innerWidth - 44}
+          height={250}
+          data={dataset}
+        />
+      </div>
+    );
   }
 
   renderPlayer(idx: number) {
@@ -62,6 +91,8 @@ class App extends React.Component {
     return (
       <div className="App">
         <h1>Company of Heroes - Kill Statistics</h1>
+        {this.renderAggregate(this.state.humanAiGraph.playerKills, this.state.humanAiGraph.playerLabel)}
+        {this.renderAggregate(this.state.humanAiGraph.cpuKills, 'AI')}
         {this.renderPlayer(0)}
         {this.renderPlayer(1)}
         {this.renderPlayer(2)}

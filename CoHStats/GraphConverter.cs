@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using CoHStats.Aggregator;
 using CoHStats.Integration;
 using log4net;
 using Newtonsoft.Json;
@@ -15,6 +16,7 @@ namespace CoHStats {
         private readonly Dictionary<Player, bool> _isInvalidPlayer = new Dictionary<Player, bool>();
         private readonly Dictionary<Player, string> _playerNames = new Dictionary<Player, string>();
         private readonly GameReader _gameReader;
+        private readonly KillCountAggregator _killCountAggregator = new KillCountAggregator();
 
         private readonly JsonSerializerSettings _settings;
 
@@ -32,6 +34,9 @@ namespace CoHStats {
         private void Add(PlayerStats stats, Player player) {
             if (stats.InfantryKilled < 100000) {
                 _playerStats[player].Add(stats);
+                if (_playerNames.ContainsKey(player)) {
+                    _killCountAggregator.Add(stats.TotalKilled, _playerNames[player]);
+                }
             }
             else {
                 Logger.Warn($"Invalidating player {player}, detected {stats.InfantryKilled} infantry kills.");
@@ -66,6 +71,13 @@ namespace CoHStats {
                     }
                 }
             }
+
+            _killCountAggregator.Tick();
+        }
+
+        private class GraphAggregate {
+            public List<GraphMapper> PerPlayerGraph { get; set; }
+            public KillCountAggregator.HumanAiKillCountAggregate HumanAiGraph { get; set; }
         }
 
         public string ToJson() {
@@ -84,29 +96,15 @@ namespace CoHStats {
                 };
 
                 var infantryKills = new List<GraphNodeDto> {zeroNode};
-                var vehicleKills = new List<GraphNodeDto> {zeroNode};
-                var buildingKills = new List<GraphNodeDto> {zeroNode};
 
                 infantryKills.AddRange(dataset.Select((e, idx) => new GraphNodeDto {
                     x = 1 + idx,
-                    y = e.InfantryKilled
-                }));
-
-                vehicleKills.AddRange(dataset.Select((e, idx) => new GraphNodeDto {
-                    x = 1 + idx,
-                    y = e.VehiclesDestroyed
-                }));
-
-                buildingKills.AddRange(dataset.Select((e, idx) => new GraphNodeDto {
-                    x = 1 + idx,
-                    y = e.BuildingsDestroyed
+                    y = e.InfantryKilled + e.VehiclesDestroyed + e.BuildingsDestroyed
                 }));
 
                 GraphMapper entry = new GraphMapper {
                     Graph = new List<List<GraphNodeDto>> {
                         infantryKills,
-                        vehicleKills,
-                        buildingKills
                     },
                     IsValidPlayer = !_isInvalidPlayer.ContainsKey(player) && _playerNames.ContainsKey(player) && !string.IsNullOrEmpty(_playerNames[player]),
                     Name = _playerNames.ContainsKey(player) ? _playerNames[player] : string.Empty
@@ -115,7 +113,12 @@ namespace CoHStats {
                 result.Add(entry);
             }
 
-            return JsonConvert.SerializeObject(result, _settings);
+            
+            return JsonConvert.SerializeObject(
+                new GraphAggregate {
+                    HumanAiGraph = _killCountAggregator.ToAggregate(),
+                    PerPlayerGraph = result
+                }, _settings);
         }
     }
 }
