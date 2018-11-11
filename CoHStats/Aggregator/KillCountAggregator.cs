@@ -65,7 +65,6 @@ namespace CoHStats.Aggregator {
         }
 
         public HumanAiKillCountAggregate ToAggregate() {
-            
             return new HumanAiKillCountAggregate {
                 CpuKills = new List<List<GraphNodeDto>> { _cpuKills },
                 PlayerKills = _playerKills.Select(p => p.Value).ToList(),

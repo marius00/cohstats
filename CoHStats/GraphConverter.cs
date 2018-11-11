@@ -33,9 +33,12 @@ namespace CoHStats {
 
         private void Add(PlayerStats stats, Player player) {
             if (stats.InfantryKilled < 100000) {
-                _playerStats[player].Add(stats);
                 if (_playerNames.ContainsKey(player)) {
                     _killCountAggregator.Add(stats.TotalKilled, player, _playerNames[player]);
+                }
+
+                if (_playerStats.ContainsKey(player)) {
+                    _playerStats[player].Add(stats);
                 }
             }
             else {
@@ -51,14 +54,15 @@ namespace CoHStats {
                     continue;
                 }
 
-                if (!_playerStats.ContainsKey(player)) {
-                    _playerStats[player] = new List<PlayerStats>();
-                }
-
                 if (!_playerNames.ContainsKey(player)) {
                     _playerNames[player] = _gameReader.GetPlayerName(player);
                     if (string.IsNullOrEmpty(_playerNames[player])) {
+                        Logger.Info($"Player {player} is not valid, not being added to dataset.");
                         _isInvalidPlayer[player] = true;
+                    }
+                    else {
+                        _playerStats[player] = new List<PlayerStats>();
+                        Logger.Info($"Player {player} is added as \"{_playerNames[player]}\"");
                     }
                 }
 
@@ -78,35 +82,23 @@ namespace CoHStats {
         private class GraphAggregate {
             public List<GraphMapper> PerPlayerGraph { get; set; }
             public KillCountAggregator.HumanAiKillCountAggregate HumanAiGraph { get; set; }
+            public bool IsGameRunning { get; set; }
         }
 
         public string ToJson() {
             List<GraphMapper> result = new List<GraphMapper>();
+            var zeroNode = new GraphNodeDto { x = 0, y = 0 };
 
-            foreach (var player in new[] {Player.One, Player.Two, Player.Three, Player.Four, Player.Five, Player.Six, Player.Seven, Player.Eight}) {
-                if (!_playerStats.ContainsKey(player)) {
-                    _playerStats[player] = new List<PlayerStats>();
-                }
+            foreach (var player in _playerStats.Keys) {
+                var numKills = new List<GraphNodeDto> {zeroNode};
 
-                var dataset = _playerStats[player];
-
-                var zeroNode = new GraphNodeDto {
-                    x = 0,
-                    y = 0
-                };
-
-                var infantryKills = new List<GraphNodeDto> {zeroNode};
-
-                infantryKills.AddRange(dataset.Select((e, idx) => new GraphNodeDto {
+                numKills.AddRange(_playerStats[player].Select((e, idx) => new GraphNodeDto {
                     x = 1 + idx,
                     y = e.InfantryKilled + e.VehiclesDestroyed + e.BuildingsDestroyed
                 }));
 
                 GraphMapper entry = new GraphMapper {
-                    Graph = new List<List<GraphNodeDto>> {
-                        infantryKills,
-                    },
-                    IsValidPlayer = !_isInvalidPlayer.ContainsKey(player) && _playerNames.ContainsKey(player) && !string.IsNullOrEmpty(_playerNames[player]),
+                    Graph = new List<List<GraphNodeDto>> { numKills, },
                     Name = _playerNames.ContainsKey(player) ? _playerNames[player] : string.Empty
                 };
 
@@ -117,7 +109,8 @@ namespace CoHStats {
             return JsonConvert.SerializeObject(
                 new GraphAggregate {
                     HumanAiGraph = _killCountAggregator.ToAggregate(),
-                    PerPlayerGraph = result
+                    PerPlayerGraph = result,
+                    IsGameRunning = _gameReader.IsActive
                 }, _settings);
         }
     }

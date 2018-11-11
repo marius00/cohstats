@@ -16,18 +16,19 @@ interface HumanAiKillCountAggregate {
 interface GraphAggregate {
   perPlayerGraph: Array<MapperData>;
   humanAiGraph: HumanAiKillCountAggregate;
+  isGameRunning: boolean;
 }
 
 interface MapperData {
   graph: Array<Array<LineData>>;
-  isValidPlayer: boolean;
   name: string;
 }
 
 class App extends React.Component {
   state = {
     dataset: [] as Array<MapperData>,
-    humanAiGraph: {cpuKills: [], playerKills: [], playerLabel: ''} as HumanAiKillCountAggregate
+    humanAiGraph: {cpuKills: [], playerKills: [], playerLabel: ''} as HumanAiKillCountAggregate,
+    isGameRunning: false
   };
 
   constructor(props: any) {
@@ -36,7 +37,8 @@ class App extends React.Component {
       GlobalMagic.refresh = (data: GraphAggregate) => {
         this.setState({
           dataset: data.perPlayerGraph,
-          humanAiGraph: data.humanAiGraph
+          humanAiGraph: data.humanAiGraph,
+          isGameRunning: data.isGameRunning
         });
       };
     }
@@ -65,7 +67,7 @@ class App extends React.Component {
       const p1 = this.state.dataset[idx];
       return (
         <div key={'player-graph-' + idx}>
-          {p1.isValidPlayer && p1.graph.length > 0 &&
+          {p1.graph.length > 0 &&
           <div>
             <h2>{p1.name}</h2>
             <AreaChart
@@ -91,8 +93,9 @@ class App extends React.Component {
     return (
       <div className="App">
         <h1>Company of Heroes - Kill Statistics</h1>
-        {this.state.humanAiGraph.playerKills.length > 1 && this.renderAggregate(this.state.humanAiGraph.playerKills, this.state.humanAiGraph.playerLabel)}
-        {this.state.humanAiGraph.cpuKills.length > 1 && this.renderAggregate(this.state.humanAiGraph.cpuKills, 'AI')}
+        {!this.state.isGameRunning && <span className="game-not-running">The game does not appear to be running</span>}
+        {this.state.humanAiGraph.playerKills.length > 0 && this.state.humanAiGraph.playerKills[0].length > 1 && this.renderAggregate(this.state.humanAiGraph.playerKills, this.state.humanAiGraph.playerLabel)}
+        {this.state.humanAiGraph.cpuKills.length > 0 && this.state.humanAiGraph.cpuKills[0].length > 1 && this.renderAggregate(this.state.humanAiGraph.cpuKills, 'AI')}
         {this.state.dataset.map((elem, idx) => this.renderPlayer(idx))}
       </div>
     );
