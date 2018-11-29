@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -19,7 +20,7 @@ namespace CoHStats {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(Form1));
         private readonly CefBrowserHandler _browser = new CefBrowserHandler();
         private readonly GameReader _gameReader = new GameReader();
-        private readonly GraphConverter _graphConverter;
+        private GraphConverter _graphConverter;
         private readonly bool _showDevtools;
 
         public Form1(bool showDevtools) {
@@ -33,9 +34,17 @@ namespace CoHStats {
                 GraphJson = _graphConverter.ToJson() // Initial data will be empty, this is fine.
             };
 
-            string url;
+            string url = $"{Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)}\\Resources\\index.html";
 #if DEBUG
-            url = "http://localhost:3000/";
+            var client = new WebClient();
+            try {
+                Logger.Debug("Checking if NodeJS is running...");
+                client.DownloadString("http://localhost:3000/");
+                url = "http://localhost:3000/";
+            }
+            catch (System.Net.WebException) {
+                Logger.Debug("NodeJS not running, defaulting to standard view");
+            }
 #else
             url = $"{Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)}\\Resources\\index.html";
 #endif
@@ -51,6 +60,7 @@ namespace CoHStats {
 
             var timerReportUsage = new System.Timers.Timer();
             timerReportUsage.Start();
+            bool wasActiveLastTick = false;
             timerReportUsage.Elapsed += (a1, a2) => {
                 if (Thread.CurrentThread.Name == null)
                     Thread.CurrentThread.Name = "Data";
@@ -59,6 +69,14 @@ namespace CoHStats {
                     _graphConverter.Tick();
                     pojo.GraphJson = _graphConverter.ToJson();
                 }
+
+                // Reset cross games
+                if (_gameReader.IsActive && !wasActiveLastTick) {
+                    _graphConverter = new GraphConverter(_gameReader);
+                    Logger.Info("A new game has started, resettings the stats.");
+                }
+
+                wasActiveLastTick = _gameReader.IsActive;
             };
             timerReportUsage.Interval = 1000;
             timerReportUsage.AutoReset = true;

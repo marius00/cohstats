@@ -43,6 +43,9 @@ namespace CoHStats {
             }
             else {
                 Logger.Warn($"Invalidating player {player}, detected {stats.InfantryKilled} infantry kills.");
+                if (player == Player.One) {
+                    _gameReader.Invalidate();
+                }
                 _isInvalidPlayer[player] = true;
             }
         }

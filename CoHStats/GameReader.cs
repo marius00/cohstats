@@ -135,6 +135,10 @@ namespace CoHStats {
             }
         }
 
+        public void Invalidate() {
+            _ptr = 0;
+        }
+
         public PlayerStats FetchStats(Player player) {
             if (_ptr == 0) {
                 if (!Initialize()) {

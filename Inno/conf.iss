@@ -24,11 +24,6 @@ Name: "{commondesktop}\CoH Stats"; Filename: "{app}\\CoHStats.exe"; Tasks: deskt
 [Files]
 Source: "..\CoHStats\bin\x86\Release\*"; Excludes: "*.pdb, *.exe.config"; DestDir: "{app}"; Flags: overwritereadonly recursesubdirs createallsubdirs touch ignoreversion
 
-
-[Run]
-Filename: "{app}\CoHStats.exe"; Description: "Launch CoH Stats"; Flags: postinstall nowait
-
-
 [Setup]
 UseSetupLdr=yes
 DisableProgramGroupPage=yes
@@ -38,7 +33,7 @@ PrivilegesRequired=admin
 DisableWelcomePage=Yes
 AlwaysShowDirOnReadyPage=Yes
 DisableDirPage=No
-OutputBaseFilename=CoHStatsInstaller-{#ApplicationVersion}
+OutputBaseFilename=CoHStats-{#ApplicationVersion}
 LicenseFile=license.txt
 
 [UninstallDelete]
