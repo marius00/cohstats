@@ -45,6 +45,9 @@ class App extends React.Component {
   }
 
   renderAggregate(dataset: LineData[][], label: string) {
+    // 1 + Math.max.apply(Math, JSON.parse(data.graphJson).humanAiGraph.playerKills[0].map(e => e.y))
+    const yAxisWidth = Math.max(5, 1 + Math.max.apply(Math, dataset[0].map(e => e.y))/10);
+
     return (
       <div>
         <h2>{label}</h2>
@@ -55,6 +58,7 @@ class App extends React.Component {
           interpolate={'cardinal'}
           grid={true}
           width={window.innerWidth - 44}
+          yTicks={yAxisWidth}
           height={250}
           data={dataset}
         />

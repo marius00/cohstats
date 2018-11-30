@@ -22,6 +22,7 @@ namespace CoHStats {
         private readonly GameReader _gameReader = new GameReader();
         private GraphConverter _graphConverter;
         private readonly bool _showDevtools;
+        private FormWindowState _previousWindowState = FormWindowState.Normal;
 
         public Form1(bool showDevtools) {
             InitializeComponent();
@@ -54,6 +55,7 @@ namespace CoHStats {
             this.Controls.Add(_browser.BrowserControl);
             _browser.BrowserControl.Show();
 
+            this.SizeChanged += Form1_SizeChanged;
             this.FormClosing += Form1_FormClosing;
 
 
@@ -74,6 +76,12 @@ namespace CoHStats {
                 if (_gameReader.IsActive && !wasActiveLastTick) {
                     _graphConverter = new GraphConverter(_gameReader);
                     Logger.Info("A new game has started, resettings the stats.");
+
+                    if (Screen.AllScreens.Length > 1) {
+                        Logger.Info($"Screens detected: {Screen.AllScreens.Length}, restoring CoH:Stats.");
+                        trayIcon_MouseDoubleClick(null, null);
+                    }
+
                 }
 
                 wasActiveLastTick = _gameReader.IsActive;
@@ -85,7 +93,45 @@ namespace CoHStats {
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e) {
+            this.SizeChanged -= Form1_SizeChanged;
             _browser.Dispose();
+        }
+
+        
+        private void Form1_SizeChanged(object sender, EventArgs e) {
+            try {
+                if (WindowState == FormWindowState.Minimized) {
+                    Hide();
+                    trayIcon.Visible = true;
+                }
+                else {
+                    trayIcon.Visible = false;
+                    _previousWindowState = WindowState;
+                }
+
+            }
+            catch (Exception ex) {
+                Logger.Warn(ex.Message);
+                Logger.Warn(ex.StackTrace);
+            }
+            
+        }
+
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        private void trayIcon_MouseDoubleClick(object sender, MouseEventArgs e) {
+            if (InvokeRequired) {
+                Invoke((MethodInvoker)delegate { trayIcon_MouseDoubleClick(sender, e); });
+            } else {
+                if (!Visible) {
+                    // Visible = true;
+                    ShowWindow(this.Handle, 4);
+                    trayIcon.Visible = false;
+                    WindowState = _previousWindowState;
+                }
+            }
         }
     }
 }

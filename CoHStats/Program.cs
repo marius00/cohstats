@@ -38,6 +38,7 @@ namespace CoHStats {
             currentDomain.UnhandledException += new UnhandledExceptionEventHandler(MyHandler);
 
 
+            Logger.Info($"Running with {Screen.AllScreens.Length} monitors.");
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1(showDevtools));
