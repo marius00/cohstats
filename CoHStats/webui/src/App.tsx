@@ -1,6 +1,8 @@
 import * as React from 'react';
 import './App.css';
 import {AreaChart, LineData} from 'react-easy-chart';
+import CheatSheet from "./CheatSheet";
+import UnitData from './UnitData.js';
 
 // tslint:disable-next-line
 declare abstract class GlobalMagic {
@@ -99,6 +101,12 @@ class App extends React.Component {
         <h1>Company of Heroes - Kill Statistics</h1>
         {!this.state.isGameRunning && <span className="game-not-running">The game does not appear to be running</span>}
         {this.state.humanAiGraph.playerKills.length > 0 && this.state.humanAiGraph.playerKills[0].length > 1 && this.renderAggregate(this.state.humanAiGraph.playerKills, this.state.humanAiGraph.playerLabel)}
+        <div className="chatsheet-container">
+          <CheatSheet data={UnitData.filter(e => e.type === 'Infantry')} />
+          <CheatSheet data={UnitData.filter(e => e.type === 'Support')} />
+          <CheatSheet data={UnitData.filter(e => e.type === 'LightVehicle')} />
+          <CheatSheet data={UnitData.filter(e => e.type === 'HeavyVehicle')} />
+        </div>
         {this.state.humanAiGraph.cpuKills.length > 0 && this.state.humanAiGraph.cpuKills[0].length > 1 && this.renderAggregate(this.state.humanAiGraph.cpuKills, 'AI')}
         {this.state.dataset.map((elem, idx) => this.renderPlayer(idx))}
       </div>

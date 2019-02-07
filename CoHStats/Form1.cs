@@ -78,7 +78,7 @@ namespace CoHStats {
                     Logger.Info("A new game has started, resettings the stats.");
 
                     if (Screen.AllScreens.Length > 1) {
-                        Logger.Info($"Screens detected: {Screen.AllScreens.Length}, restoring CoH:Stats.");
+                        Logger.Info($"Screens detected: {Screen.AllScreens.Length}, restoring CoH:Statsas in .");
                         trayIcon_MouseDoubleClick(null, null);
                     }
 

@@ -23,9 +23,26 @@
 }
 
 @keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
+
 .game-not-running {
   color: red;
+}
+
+.cheatsheet {
+  text-align: center;
+  display: inline-block;
+  height: 100%;
+  vertical-align: top;
+  font-size: 8pt;
+  border-left: 1px solid #dddbda;
+}
+.linkrow {
+  cursor: pointer;
 }
