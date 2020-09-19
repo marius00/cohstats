@@ -1,9 +1,14 @@
 import * as React from "react";
 
+interface UpgradeTier {
+  level: number;
+  type: string;
+}
+
 interface SheetEntry {
   name: string;
   url: string;
-  upgrades: number[];
+  upgrades: UpgradeTier[];
   tier: number;
   type: string;
 }
@@ -11,15 +16,27 @@ interface SheetEntry {
 interface Props {
   data: SheetEntry[];
 }
+
+
 class CheatSheet extends React.PureComponent<Props> {
+
+  toTierElement(entry: UpgradeTier) {
+    return <span className={entry.type}>{entry.level}</span>;
+  }
+
+
   renderEntry(entry: SheetEntry) {
+    let upgrades = entry.upgrades
+      .map(this.toTierElement)
+      .map((item, index) => [index > 0 && ', ', item ]);
+
     return (
       <tr className="slds-hint-parent linkrow" key={entry.url} onClick={() => window.open(entry.url)}>
         <td>
           <div className="slds-truncate">{entry.name}</div>
         </td>
         <td>
-          <div className="slds-truncate">{entry.upgrades.join(', ')}</div>
+          <div className="slds-truncate">{upgrades}</div>
         </td>
         <td>
           <div className="slds-truncate">{entry.tier === 0 ? '-' : entry.tier}</div>

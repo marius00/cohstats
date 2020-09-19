@@ -3,3 +3,12 @@ body {
   padding: 0;
   font-family: sans-serif;
 }
+.defensive {
+  color: green;
+}
+.offensive {
+  color: red;
+}
+.both {
+  color: orange;
+}
