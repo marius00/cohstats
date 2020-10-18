@@ -12,6 +12,7 @@ namespace CoHStats {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(GraphConverter));
 
         private readonly Dictionary<Player, List<PlayerStats>> _playerStats = new Dictionary<Player, List<PlayerStats>>();
+        private readonly Dictionary<Player, int> _prevTotalPlayerKills = new Dictionary<Player, int>();
         // Make a Player aggregate object?
         private readonly Dictionary<Player, bool> _isInvalidPlayer = new Dictionary<Player, bool>();
         private readonly Dictionary<Player, string> _playerNames = new Dictionary<Player, string>();
@@ -19,8 +20,9 @@ namespace CoHStats {
         private readonly KillCountAggregator _killCountAggregator = new KillCountAggregator();
 
         private readonly JsonSerializerSettings _settings;
+        private readonly int _resolution;
 
-        public GraphConverter(GameReader gameReader) {
+        public GraphConverter(GameReader gameReader, int resolution) {
             _settings = new JsonSerializerSettings {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
                 Culture = System.Globalization.CultureInfo.InvariantCulture,
@@ -28,18 +30,26 @@ namespace CoHStats {
             };
 
             _gameReader = gameReader;
+            _resolution = resolution;
         }
 
 
         private void Add(PlayerStats stats, Player player) {
+
             if (stats.InfantryKilled < 100000) {
                 if (_playerNames.ContainsKey(player)) {
                     _killCountAggregator.Add(stats.TotalKilled, player, _playerNames[player]);
                 }
 
+
                 if (_playerStats.ContainsKey(player)) {
+                    if (_prevTotalPlayerKills.ContainsKey(player) && _prevTotalPlayerKills[player] != stats.TotalKilled) {
+                        Logger.Debug($"Player {player} has {stats.InfantryKilled} inf, {stats.VehiclesDestroyed} vehicle, {stats.BuildingsDestroyed} building kills");
+                    }
                     _playerStats[player].Add(stats);
+                    _prevTotalPlayerKills[player] = stats.TotalKilled;
                 }
+
             }
             else {
                 Logger.Warn($"Invalidating player {player}, detected {stats.InfantryKilled} infantry kills.");
@@ -88,6 +98,13 @@ namespace CoHStats {
             public bool IsGameRunning { get; set; }
         }
 
+        private int FormatKills(int numKills) {
+            if (_resolution > 1)
+                return numKills - (numKills % _resolution);
+            else
+                return numKills;
+        }
+
         public string ToJson() {
             List<GraphMapper> result = new List<GraphMapper>();
             var zeroNode = new GraphNodeDto { x = 0, y = 0 };
@@ -97,7 +114,7 @@ namespace CoHStats {
 
                 numKills.AddRange(_playerStats[player].Select((e, idx) => new GraphNodeDto {
                     x = 1 + idx,
-                    y = e.InfantryKilled + e.VehiclesDestroyed + e.BuildingsDestroyed
+                    y = FormatKills(e.TotalKilled)
                 }));
 
                 GraphMapper entry = new GraphMapper {

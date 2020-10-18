@@ -23,11 +23,12 @@ namespace CoHStats {
         private GraphConverter _graphConverter;
         private readonly bool _showDevtools;
         private FormWindowState _previousWindowState = FormWindowState.Normal;
+        private readonly int _resolution = 2;
 
         public Form1(bool showDevtools) {
             InitializeComponent();
             this._showDevtools = showDevtools;
-            _graphConverter = new GraphConverter(_gameReader);
+            _graphConverter = new GraphConverter(_gameReader, _resolution);
         }
 
         private void Form1_Load(object sender, EventArgs e) {
@@ -74,11 +75,11 @@ namespace CoHStats {
 
                 // Reset cross games
                 if (_gameReader.IsActive && !wasActiveLastTick) {
-                    _graphConverter = new GraphConverter(_gameReader);
+                    _graphConverter = new GraphConverter(_gameReader, _resolution);
                     Logger.Info("A new game has started, resettings the stats.");
 
                     if (Screen.AllScreens.Length > 1) {
-                        Logger.Info($"Screens detected: {Screen.AllScreens.Length}, restoring CoH:Statsas in .");
+                        Logger.Info($"Screens detected: {Screen.AllScreens.Length}, restoring CoH:Stats in .");
                         trayIcon_MouseDoubleClick(null, null);
                     }
 

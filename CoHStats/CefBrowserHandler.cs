@@ -49,17 +49,18 @@ namespace CoHStats {
             try {
                 Logger.Info("Creating Chromium instance..");
                 CefSharpSettings.LegacyJavascriptBindingEnabled = true;
+                CefSharpSettings.WcfEnabled = true;
                 Cef.EnableHighDPISupport();
 
 
                 _browser = new ChromiumWebBrowser(startPage);
 
-                _browser.RegisterJsObject("data", bindeable);
+                _browser.JavascriptObjectRepository.Register("data", bindeable, isAsync: false, options: BindingOptions.DefaultBinder);
+
                 if (showDevtools) {
                     _browser.IsBrowserInitializedChanged += (sender, args) => _browser.ShowDevTools();
                 }
 
-                //browser.RequestHandler = new TransferUrlHijack { TransferMethod = transferItem };
                 Logger.Info("Chromium created..");
             }
             catch (System.IO.FileNotFoundException ex) {
