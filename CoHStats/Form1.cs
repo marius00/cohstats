@@ -23,7 +23,7 @@ namespace CoHStats {
         private GraphConverter _graphConverter;
         private readonly bool _showDevtools;
         private FormWindowState _previousWindowState = FormWindowState.Normal;
-        private readonly int _resolution = 2;
+        private readonly int _resolution = 3;
 
         public Form1(bool showDevtools) {
             InitializeComponent();

@@ -6,7 +6,6 @@ using CefSharp.WinForms;
 using log4net;
 
 namespace CoHStats {
-
     public class CefBrowserHandler : IDisposable {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(CefBrowserHandler));
         private ChromiumWebBrowser _browser;
