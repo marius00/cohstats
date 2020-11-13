@@ -91,6 +91,26 @@ namespace CoHStats {
             timerReportUsage.AutoReset = true;
             timerReportUsage.Start();
 
+
+
+
+
+
+            var timerAutoClose = new System.Timers.Timer();
+            timerAutoClose.Elapsed += (a1, a2) => {
+                if (Thread.CurrentThread.Name == null)
+                    Thread.CurrentThread.Name = "AutoClose";
+                if (InvokeRequired) {
+                    Invoke((MethodInvoker)Close);
+                }
+                else {
+                    Close();
+                }
+
+            };
+            timerAutoClose.Interval = 1000 * 60 * 60 * 2; // 2H
+            timerAutoClose.AutoReset = true;
+            timerAutoClose.Start();
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e) {
