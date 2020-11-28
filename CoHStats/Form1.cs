@@ -95,7 +95,7 @@ namespace CoHStats {
 
 
 
-
+            
             var timerAutoClose = new System.Timers.Timer();
             timerAutoClose.Elapsed += (a1, a2) => {
                 if (Thread.CurrentThread.Name == null)
