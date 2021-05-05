@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using CoHStats.Aggregator;
+using CoHStats.Game;
 using CoHStats.Integration;
 using log4net;
 using Newtonsoft.Json;
@@ -46,6 +47,7 @@ namespace CoHStats {
                     if (_prevTotalPlayerKills.ContainsKey(player) && _prevTotalPlayerKills[player] != stats.TotalKilled) {
                         Logger.Debug($"Player {player} has {stats.InfantryKilled} inf, {stats.VehiclesDestroyed} vehicle, {stats.BuildingsDestroyed} building kills");
                     }
+
                     _playerStats[player].Add(stats);
                     _prevTotalPlayerKills[player] = stats.TotalKilled;
                 }
@@ -80,7 +82,6 @@ namespace CoHStats {
                 }
 
                 if (!string.IsNullOrEmpty(_playerNames[player])) {
-
                     // Add new data
                     var stats = _gameReader.FetchStats(player);
                     if (stats != null) {
@@ -106,9 +107,10 @@ namespace CoHStats {
         }
 
         public string ToJson() {
+
+            // Calc per-player graph, useless?
             List<GraphMapper> result = new List<GraphMapper>();
             var zeroNode = new GraphNodeDto { x = 0, y = 0 };
-
             foreach (var player in _playerStats.Keys) {
                 var numKills = new List<GraphNodeDto> {zeroNode};
 

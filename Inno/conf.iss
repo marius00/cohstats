@@ -18,6 +18,7 @@ Name: starticon; Description: "Create a &startmenu icon"; GroupDescription: "Ico
 
 [Icons]
 Name: "{commonprograms}\CoH Stats"; Filename: "{app}\\CoHStats.exe"; Tasks: starticon
+Name: "{commonprograms}\CoH Stats (Standalone)"; Filename: "{app}\\CoHStats.exe"; Parameters: "-nochrome"; Tasks: starticon
 Name: "{commondesktop}\CoH Stats"; Filename: "{app}\\CoHStats.exe"; Tasks: desktopicon
 
 

@@ -58,12 +58,14 @@ namespace CoHStats.Aggregator {
             _tick++;
         }
 
+        [System.Obsolete]
         public class HumanAiKillCountAggregate {
             public List<List<GraphNodeDto>> PlayerKills { get; set; }
             public List<List<GraphNodeDto>> CpuKills { get; set; }
             public string PlayerLabel { get; set; }
         }
 
+        [System.Obsolete]
         public HumanAiKillCountAggregate ToAggregate() {
             return new HumanAiKillCountAggregate {
                 CpuKills = new List<List<GraphNodeDto>> { _cpuKills },

@@ -21,7 +21,7 @@ interface Props {
 class CheatSheet extends React.PureComponent<Props> {
 
   toTierElement(entry: UpgradeTier) {
-    return <span className={entry.type}>{entry.level}</span>;
+    return <span className={entry.type} key={Math.random()}>{entry.level}</span>;
   }
 
 

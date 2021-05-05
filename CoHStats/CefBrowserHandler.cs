@@ -9,9 +9,6 @@ namespace CoHStats {
     public class CefBrowserHandler : IDisposable {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(CefBrowserHandler));
         private ChromiumWebBrowser _browser;
-
-        public WebViewJsPojo JsPojo { get; private set; }
-
         public Control BrowserControl => _browser;
 
         private object _lockObj = new object();
@@ -42,9 +39,7 @@ namespace CoHStats {
             }
         }
 
-        public void InitializeChromium(string startPage, WebViewJsPojo bindeable, bool showDevtools) {
-            this.JsPojo = bindeable;
-
+        public void InitializeChromium(string startPage, bool showDevtools) {
             try {
                 Logger.Info("Creating Chromium instance..");
                 CefSharpSettings.LegacyJavascriptBindingEnabled = true;
@@ -53,8 +48,6 @@ namespace CoHStats {
 
 
                 _browser = new ChromiumWebBrowser(startPage);
-
-                _browser.JavascriptObjectRepository.Register("data", bindeable, isAsync: false, options: BindingOptions.DefaultBinder);
 
                 if (showDevtools) {
                     _browser.IsBrowserInitializedChanged += (sender, args) => _browser.ShowDevTools();

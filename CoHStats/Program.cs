@@ -27,21 +27,26 @@ namespace CoHStats {
                 version.Build, version.Revision, buildDate);
 
             bool showDevtools;
+            bool skipChromium = args != null && args.Length > 0 && args.Any(x => x.Contains("nochrome"));
 #if DEBUG
             showDevtools = true;
 #else
             showDevtools = args != null && args.Length > 0 && args.Any(x => x.Contains("devtools"));
+            if (showDevtools && skipChromium) {
+                Logger.Warn("Show devtools is enabled with -devtools, but embedded browser is disabled with -nochrome");
+            }
 #endif
 
 
-            AppDomain currentDomain = AppDomain.CurrentDomain;
+
+                AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += new UnhandledExceptionEventHandler(MyHandler);
 
 
             Logger.Info($"Running with {Screen.AllScreens.Length} monitors.");
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1(showDevtools));
+            Application.Run(new Form1(showDevtools, skipChromium));
         }
 
         private static void MyHandler(object sender, UnhandledExceptionEventArgs args) {

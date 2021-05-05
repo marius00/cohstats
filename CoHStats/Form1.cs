@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -12,7 +13,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CefSharp;
+using CoHStats.Game;
 using CoHStats.Integration;
+using CoHStats.Websocket;
 using log4net;
 
 namespace CoHStats {
@@ -22,55 +25,64 @@ namespace CoHStats {
         private readonly GameReader _gameReader = new GameReader();
         private GraphConverter _graphConverter;
         private readonly bool _showDevtools;
+        private readonly bool _skipChromium;
         private FormWindowState _previousWindowState = FormWindowState.Normal;
-        private readonly int _resolution = 3;
+        private readonly int _resolution = 1;
+        private readonly WebsocketServer _server = new WebsocketServer(59123);
+        string url = $"{Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)}\\Resources\\index.html";
 
-        public Form1(bool showDevtools) {
+        public Form1(bool showDevtools, bool skipChromium) {
             InitializeComponent();
             this._showDevtools = showDevtools;
+            _skipChromium = skipChromium;
             _graphConverter = new GraphConverter(_gameReader, _resolution);
+            _server.Start();
+
+            if (_skipChromium) {
+                    WindowState = FormWindowState.Minimized;
+                    this.Load += (_, __) => this.Hide();
+                    trayIcon.Visible = true;
+                }
         }
 
         private void Form1_Load(object sender, EventArgs e) {
-            var pojo = new WebViewJsPojo {
-                GraphJson = _graphConverter.ToJson() // Initial data will be empty, this is fine.
-            };
-
-            string url = $"{Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)}\\Resources\\index.html";
+            if (!_skipChromium) {
 #if DEBUG
-            var client = new WebClient();
-            try {
-                Logger.Debug("Checking if NodeJS is running...");
-                client.DownloadString("http://localhost:3000/");
-                url = "http://localhost:3000/";
-            }
-            catch (System.Net.WebException) {
-                Logger.Debug("NodeJS not running, defaulting to standard view");
-            }
-#else
-            url = $"{Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)}\\Resources\\index.html";
+                try {
+                    using (var client = new WebClient()) {
+                        Logger.Debug("Checking if NodeJS is running...");
+                        client.DownloadString("http://localhost:3000/");
+                        url = "http://localhost:3000/";
+                    }
+                }
+                catch (System.Net.WebException) {
+                    Logger.Debug("NodeJS not running, defaulting to standard view");
+                }
 #endif
-            Logger.Info($"Running with UI: {url}");
+                Logger.Info($"Running with UI: {url}");
 
-            _browser.InitializeChromium(url, pojo, _showDevtools);
-            this.Controls.Add(_browser.BrowserControl);
-            _browser.BrowserControl.Show();
+
+                _browser.InitializeChromium(url, _showDevtools);
+                this.Controls.Add(_browser.BrowserControl);
+                _browser.BrowserControl.Show();
+            }
 
             this.SizeChanged += Form1_SizeChanged;
             this.FormClosing += Form1_FormClosing;
 
 
 
-            var timerReportUsage = new System.Timers.Timer();
-            timerReportUsage.Start();
+            var gameTickTimer = new System.Timers.Timer();
+            gameTickTimer.Start();
             bool wasActiveLastTick = false;
-            timerReportUsage.Elapsed += (a1, a2) => {
+            gameTickTimer.Elapsed += (a1, a2) => {
                 if (Thread.CurrentThread.Name == null)
                     Thread.CurrentThread.Name = "Data";
 
                 if (_gameReader.IsActive) {
-                    _graphConverter.Tick();
-                    pojo.GraphJson = _graphConverter.ToJson();
+                    _graphConverter.Tick(); // TODO: This could return the diff, no?
+                    var json = _graphConverter.ToJson();
+                    _server.Write(json);
                 }
 
                 // Reset cross games
@@ -87,15 +99,21 @@ namespace CoHStats {
 
                 wasActiveLastTick = _gameReader.IsActive;
             };
-            timerReportUsage.Interval = 1000;
-            timerReportUsage.AutoReset = true;
-            timerReportUsage.Start();
 
+            gameTickTimer.Interval = 1000;
+            gameTickTimer.AutoReset = true;
+            gameTickTimer.Start();
 
+            if (!_skipChromium) {
+                EnableAutoCloseTimer();
+            }
+        }
 
-
-
-            
+        /// <summary>
+        /// Lame workaround for the chromium embedded browser crashing once in a while
+        /// So after a while, just close coh:stats as it has probably crashed.
+        /// </summary>
+        private void EnableAutoCloseTimer() {
             var timerAutoClose = new System.Timers.Timer();
             timerAutoClose.Elapsed += (a1, a2) => {
                 if (Thread.CurrentThread.Name == null)
@@ -111,11 +129,17 @@ namespace CoHStats {
             timerAutoClose.Interval = 1000 * 60 * 60 * 2; // 2H
             timerAutoClose.AutoReset = true;
             timerAutoClose.Start();
+
         }
 
+        /// <summary>
+        /// Cleanup, end threads etc.
+        /// </summary>
         private void Form1_FormClosing(object sender, FormClosingEventArgs e) {
             this.SizeChanged -= Form1_SizeChanged;
-            _browser.Dispose();
+            if (!_skipChromium)
+                _browser.Dispose();
+            _server.Dispose();
         }
 
         
@@ -143,6 +167,11 @@ namespace CoHStats {
         private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
         private void trayIcon_MouseDoubleClick(object sender, MouseEventArgs e) {
+            if (_skipChromium) {
+                Process.Start(url);
+                return;
+            }
+
             if (InvokeRequired) {
                 Invoke((MethodInvoker)delegate { trayIcon_MouseDoubleClick(sender, e); });
             } else {
@@ -153,6 +182,14 @@ namespace CoHStats {
                     WindowState = _previousWindowState;
                 }
             }
+        }
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e) {
+            trayIcon_MouseDoubleClick(this, null);
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e) {
+            Close();
         }
     }
 }
