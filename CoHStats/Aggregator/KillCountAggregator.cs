@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using CoHStats.Game;
 using CoHStats.Integration;
 
 namespace CoHStats.Aggregator {

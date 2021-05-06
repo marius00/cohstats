@@ -37,7 +37,7 @@ class App extends React.Component {
           [
             {
               "x": 239,
-              "y": 6
+              "y": 600
             },
             {
               "x": 240,
@@ -514,7 +514,7 @@ class App extends React.Component {
         [
           {
             "x": 233,
-            "y": 0
+            "y": 600
           },
           {
             "x": 234,
@@ -666,10 +666,10 @@ class App extends React.Component {
       let datapoints = [];
       for (let dp = numberOfPointsToInclude; dp < dataset[idx].length; dp++) {
         datapoints.push({
-            x: dataset[idx][dp].x,
+          x: dataset[idx][dp].x,
           // @ts-ignore
-            y: dataset[idx][dp].y - dataset[idx][dp-numberOfPointsToInclude].y // Number of kills the past numberOfPointsToInclude seconds
-          });
+          y: Math.max(0, dataset[idx][dp].y - dataset[idx][dp - numberOfPointsToInclude].y) // Number of kills the past numberOfPointsToInclude seconds
+        });
       }
 
       converted.push(datapoints);

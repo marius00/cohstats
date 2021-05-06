@@ -15,15 +15,14 @@ namespace CoHStats {
         private readonly Dictionary<Player, List<PlayerStats>> _playerStats = new Dictionary<Player, List<PlayerStats>>();
         private readonly Dictionary<Player, int> _prevTotalPlayerKills = new Dictionary<Player, int>();
         // Make a Player aggregate object?
-        private readonly Dictionary<Player, bool> _isInvalidPlayer = new Dictionary<Player, bool>();
-        private readonly Dictionary<Player, string> _playerNames = new Dictionary<Player, string>();
         private readonly GameReader _gameReader;
         private readonly KillCountAggregator _killCountAggregator = new KillCountAggregator();
 
         private readonly JsonSerializerSettings _settings;
         private readonly int _resolution;
+        private readonly PlayerService _playerService;
 
-        public GraphConverter(GameReader gameReader, int resolution) {
+        public GraphConverter(GameReader gameReader, int resolution, PlayerService playerService) {
             _settings = new JsonSerializerSettings {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
                 Culture = System.Globalization.CultureInfo.InvariantCulture,
@@ -32,14 +31,16 @@ namespace CoHStats {
 
             _gameReader = gameReader;
             _resolution = resolution;
+            _playerService = playerService;
         }
 
 
         private void Add(PlayerStats stats, Player player) {
 
             if (stats.InfantryKilled < 100000) {
-                if (_playerNames.ContainsKey(player)) {
-                    _killCountAggregator.Add(stats.TotalKilled, player, _playerNames[player]);
+                
+                if (_playerService.IsValid(player)) {
+                    _killCountAggregator.Add(stats.TotalKilled, player, _playerService.GetName(player));
                 }
 
 
@@ -51,42 +52,24 @@ namespace CoHStats {
                     _playerStats[player].Add(stats);
                     _prevTotalPlayerKills[player] = stats.TotalKilled;
                 }
-
             }
             else {
                 Logger.Warn($"Invalidating player {player}, detected {stats.InfantryKilled} infantry kills.");
-                if (player == Player.One) {
-                    _gameReader.Invalidate();
-                }
-                _isInvalidPlayer[player] = true;
+                _playerService.Invalidate(player);
             }
         }
 
         public void Tick() {
-            foreach (var player in new[] {Player.One, Player.Two, Player.Three, Player.Four, Player.Five, Player.Six, Player.Seven, Player.Eight }) {
-                // Skip invalids
-                if (_isInvalidPlayer.ContainsKey(player)) {
-                    continue;
+            foreach (var player in _playerService.GetPlayers()) {
+                if (!_playerStats.ContainsKey(player)) {
+                    _playerStats[player] = new List<PlayerStats>();
+                    Logger.Info($"Player {player} is added as \"{_playerService.GetName(player)}\"");
                 }
 
-                if (!_playerNames.ContainsKey(player)) {
-                    _playerNames[player] = _gameReader.GetPlayerName(player);
-                    if (string.IsNullOrEmpty(_playerNames[player])) {
-                        Logger.Info($"Player {player} is not valid, not being added to dataset.");
-                        _isInvalidPlayer[player] = true;
-                    }
-                    else {
-                        _playerStats[player] = new List<PlayerStats>();
-                        Logger.Info($"Player {player} is added as \"{_playerNames[player]}\"");
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(_playerNames[player])) {
-                    // Add new data
-                    var stats = _gameReader.FetchStats(player);
-                    if (stats != null) {
-                        Add(stats, player);
-                    }
+                // Add new data
+                var stats = _gameReader.FetchStats(player);
+                if (stats != null) {
+                    Add(stats, player);
                 }
             }
 
@@ -121,7 +104,7 @@ namespace CoHStats {
 
                 GraphMapper entry = new GraphMapper {
                     Graph = new List<List<GraphNodeDto>> { numKills, },
-                    Name = _playerNames.ContainsKey(player) ? _playerNames[player] : string.Empty
+                    Name = _playerService.GetName(player)
                 };
 
                 result.Add(entry);

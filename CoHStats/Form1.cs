@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CefSharp;
+using CoHStats.Aggregator;
 using CoHStats.Game;
 using CoHStats.Integration;
 using CoHStats.Websocket;
@@ -24,25 +25,32 @@ namespace CoHStats {
         private readonly CefBrowserHandler _browser = new CefBrowserHandler();
         private readonly GameReader _gameReader = new GameReader();
         private GraphConverter _graphConverter;
+        private DataAggregator _aggregator;
         private readonly bool _showDevtools;
         private readonly bool _skipChromium;
         private FormWindowState _previousWindowState = FormWindowState.Normal;
         private readonly int _resolution = 1;
         private readonly WebsocketServer _server = new WebsocketServer(59123);
-        string url = $"{Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)}\\Resources\\index.html";
+        private string _url = $"{Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)}\\Resources\\index.html";
 
         public Form1(bool showDevtools, bool skipChromium) {
             InitializeComponent();
             this._showDevtools = showDevtools;
             _skipChromium = skipChromium;
-            _graphConverter = new GraphConverter(_gameReader, _resolution);
+            RecreateAggregators();
             _server.Start();
 
             if (_skipChromium) {
-                    WindowState = FormWindowState.Minimized;
-                    this.Load += (_, __) => this.Hide();
-                    trayIcon.Visible = true;
-                }
+                WindowState = FormWindowState.Minimized;
+                this.Load += (_, __) => this.Hide();
+                trayIcon.Visible = true;
+            }
+        }
+
+        private void RecreateAggregators() {
+            _graphConverter = new GraphConverter(_gameReader, _resolution, new PlayerService(_gameReader));
+            _aggregator = new DataAggregator(_gameReader, new PlayerService(_gameReader));
+
         }
 
         private void Form1_Load(object sender, EventArgs e) {
@@ -52,24 +60,23 @@ namespace CoHStats {
                     using (var client = new WebClient()) {
                         Logger.Debug("Checking if NodeJS is running...");
                         client.DownloadString("http://localhost:3000/");
-                        url = "http://localhost:3000/";
+                        _url = "http://localhost:3000/";
                     }
                 }
                 catch (System.Net.WebException) {
                     Logger.Debug("NodeJS not running, defaulting to standard view");
                 }
 #endif
-                Logger.Info($"Running with UI: {url}");
+                Logger.Info($"Running with UI: {_url}");
 
 
-                _browser.InitializeChromium(url, _showDevtools);
+                _browser.InitializeChromium(_url, _showDevtools);
                 this.Controls.Add(_browser.BrowserControl);
                 _browser.BrowserControl.Show();
             }
 
             this.SizeChanged += Form1_SizeChanged;
             this.FormClosing += Form1_FormClosing;
-
 
 
             var gameTickTimer = new System.Timers.Timer();
@@ -80,21 +87,21 @@ namespace CoHStats {
                     Thread.CurrentThread.Name = "Data";
 
                 if (_gameReader.IsActive) {
-                    _graphConverter.Tick(); // TODO: This could return the diff, no?
+                    _graphConverter.Tick();
+                    _aggregator.Tick();
                     var json = _graphConverter.ToJson();
                     _server.Write(json);
                 }
 
                 // Reset cross games
                 if (_gameReader.IsActive && !wasActiveLastTick) {
-                    _graphConverter = new GraphConverter(_gameReader, _resolution);
-                    Logger.Info("A new game has started, resettings the stats.");
+                    RecreateAggregators();
+                    Logger.Info("A new game has started, resetting the stats.");
 
                     if (Screen.AllScreens.Length > 1) {
                         Logger.Info($"Screens detected: {Screen.AllScreens.Length}, restoring CoH:Stats in .");
                         trayIcon_MouseDoubleClick(null, null);
                     }
-
                 }
 
                 wasActiveLastTick = _gameReader.IsActive;
@@ -119,17 +126,15 @@ namespace CoHStats {
                 if (Thread.CurrentThread.Name == null)
                     Thread.CurrentThread.Name = "AutoClose";
                 if (InvokeRequired) {
-                    Invoke((MethodInvoker)Close);
+                    Invoke((MethodInvoker) Close);
                 }
                 else {
                     Close();
                 }
-
             };
             timerAutoClose.Interval = 1000 * 60 * 60 * 2; // 2H
             timerAutoClose.AutoReset = true;
             timerAutoClose.Start();
-
         }
 
         /// <summary>
@@ -142,7 +147,7 @@ namespace CoHStats {
             _server.Dispose();
         }
 
-        
+
         private void Form1_SizeChanged(object sender, EventArgs e) {
             try {
                 if (WindowState == FormWindowState.Minimized) {
@@ -153,13 +158,11 @@ namespace CoHStats {
                     trayIcon.Visible = false;
                     _previousWindowState = WindowState;
                 }
-
             }
             catch (Exception ex) {
                 Logger.Warn(ex.Message);
                 Logger.Warn(ex.StackTrace);
             }
-            
         }
 
 
@@ -168,13 +171,14 @@ namespace CoHStats {
 
         private void trayIcon_MouseDoubleClick(object sender, MouseEventArgs e) {
             if (_skipChromium) {
-                Process.Start(url);
+                Process.Start(_url);
                 return;
             }
 
             if (InvokeRequired) {
-                Invoke((MethodInvoker)delegate { trayIcon_MouseDoubleClick(sender, e); });
-            } else {
+                Invoke((MethodInvoker) delegate { trayIcon_MouseDoubleClick(sender, e); });
+            }
+            else {
                 if (!Visible) {
                     // Visible = true;
                     ShowWindow(this.Handle, 4);

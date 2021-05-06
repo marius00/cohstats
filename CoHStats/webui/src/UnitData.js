@@ -42,11 +42,18 @@ const UnitData = [
     "type": "Support"
   },
   {
-    "name": "Sniper",
-    "url": "https://companyofheroes.fandom.com/wiki/Sniper_(Wehrmacht)",
-    "upgrades": [{level: 1, type: 'defensive'}, {level: 2, type: 'defensive'}, {level: 3, type: 'offensive'}],
-    "tier": 1,
-    "type": "Support"
+      "name": "Sniper",
+      "url": "https://companyofheroes.fandom.com/wiki/Sniper_(Wehrmacht)",
+      "upgrades": [{level: 1, type: 'defensive'}, {level: 2, type: 'defensive'}, {level: 3, type: 'offensive'}],
+      "tier": 1,
+      "type": "Support"
+  },
+  {
+      "name": "Nebelwerfer",
+      "url": "https://companyofheroes.fandom.com/wiki/Sniper_(Wehrmacht)",
+      "upgrades": [{level: 1, type: 'offensive'}, {level: 2, type: 'offensive'}, {level: 3, type: 'offensive'}],
+      "tier": 2,
+      "type": "Support"
   },
   {
     "name": "HalfTrack (SdKfz 251)",

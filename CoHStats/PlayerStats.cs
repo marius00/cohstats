@@ -10,5 +10,9 @@ namespace CoHStats {
         public int InfantryKilled { get; set; }
         public int VehiclesDestroyed { get; set; }
         public int BuildingsDestroyed { get; set; }
+
+        public int InfantryLost { get; set; }
+        public int VehiclesLost { get; set; }
+        public int BuildingsLost { get; set; }
     }
 }

@@ -59,7 +59,8 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <ApplicationIcon>
+    </ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="log4net, Version=2.0.11.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
@@ -83,7 +84,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Aggregator\DataAggregator.cs" />
     <Compile Include="Aggregator\KillCountAggregator.cs" />
+    <Compile Include="Aggregator\PlayerService.cs" />
     <Compile Include="CefBrowserHandler.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
@@ -91,6 +94,7 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Game\GameOffsets.cs" />
     <Compile Include="Game\GameReader.cs" />
     <Compile Include="Game\Util.cs" />
     <Compile Include="GraphConverter.cs" />
@@ -98,7 +102,7 @@
     <Compile Include="Integration\GraphNodeDto.cs" />
     <Compile Include="Integration\TimeStepArg.cs" />
     <Compile Include="Integration\UpdatePlayerArg.cs" />
-    <Compile Include="Player.cs" />
+    <Compile Include="Game\Player.cs" />
     <Compile Include="PlayerStats.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

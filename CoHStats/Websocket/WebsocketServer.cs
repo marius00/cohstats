@@ -1,6 +1,7 @@
 ﻿using log4net;
 using System;
 using System.Collections.Concurrent;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -116,7 +117,15 @@ namespace CoHStats.Websocket {
             while (client.Available < 3) ; // match against "get"
 
             byte[] bytes = new byte[client.Available];
-            stream.Read(bytes, 0, bytes.Length);
+            try {
+                stream.Read(bytes, 0, bytes.Length);
+            }
+            catch (IOException ex) {
+                Logger.Warn($"Error reading from websocket, disconnecting client. ({ex.Message})", ex);
+                _clients.TryRemove(data.Id, out _);
+                return;
+            }
+
             string s = Encoding.UTF8.GetString(bytes);
 
             if (Regex.IsMatch(s, "^GET", RegexOptions.IgnoreCase)) {
@@ -138,7 +147,15 @@ namespace CoHStats.Websocket {
                     "Upgrade: websocket\r\n" +
                     "Sec-WebSocket-Accept: " + swkaSha1Base64 + "\r\n\r\n");
 
-                stream.Write(response, 0, response.Length);
+                try {
+                    stream.Write(response, 0, response.Length);
+                }
+                catch (IOException ex) {
+                    Logger.Warn($"Error writing to websocket, disconnecting client. ({ex.Message})", ex);
+                    _clients.TryRemove(data.Id, out _);
+                    return;
+                }
+
                 OnClientConnect?.Invoke(this, new OnSocketReadEventArg { Id = data.Id });
             }
             else {
