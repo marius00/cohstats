@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Web.WebSockets;
 using System.Windows.Forms;
 using CoHStats.Game;
 using CoHStats.Integration;
@@ -18,12 +20,14 @@ namespace CoHStats.Aggregator {
         private readonly Dictionary<Player, List<PlayerStats>> _cpuDeltaStats = new Dictionary<Player, List<PlayerStats>>();
         private readonly GameReader _gameReader;
         private readonly PlayerService _playerService;
+        private const int DeltaOffset = 6; // How many seconds back should the delta count
 
         public DataAggregator(GameReader gameReader, PlayerService playerService) {
             _gameReader = gameReader;
             _playerService = playerService;
             Tick();
         }
+
 
         /// <summary>
         /// Gets the "delta" of the stats.
@@ -39,7 +43,11 @@ namespace CoHStats.Aggregator {
                 return stats;
             }
             else {
-                var recent = recentStats[recentStats.Count - 1];
+                // -1 since we just inserted an entry prior to GetDelta being called
+                // Minus the offset again to get "recent kills over X seconds"
+                var offset = Math.Max(0, recentStats.Count - 1 - DeltaOffset);
+
+                var recent = recentStats[offset];
                 return new PlayerStats {
                     BuildingsLost = stats.BuildingsLost - recent.BuildingsLost,
                     InfantryLost = stats.InfantryLost - recent.InfantryLost,
@@ -69,6 +77,25 @@ namespace CoHStats.Aggregator {
                 var delta = GetDelta(stats, active[0][player]);
                 active[1][player].Add(delta);
             }
+        }
+
+        // TODO: No reason this class should be responsible for export formats.. but its the owner of the data so fits really well.
+        public List<JsonExportFormat> Export() {
+            List<JsonExportFormat> exports = new List<JsonExportFormat>(2);
+            foreach (var player in _playerService.GetPlayers()) {
+                if (_playerService.IsCpu(player))
+                    continue;
+
+                EnsureExists(player);
+
+                exports.Add(new JsonExportFormat {
+                    Name = _playerService.GetName(player),
+                    Stats = _playerStats[player].ToList(),
+                    Deltas = _playerDeltaStats[player].ToList() // Copy to prevent mutation during serialization
+                });
+            }
+
+            return exports;
         }
 
         /// <summary>

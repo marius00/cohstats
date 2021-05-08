@@ -23,12 +23,14 @@ namespace CoHStats.Aggregator {
         /// </summary>
         /// <param name="player"></param>
         public void Invalidate(Player player) {
-            Logger.Info($"Invalidating player {player}");
-            _invalidPlayers[player] = true;
+            if (!_invalidPlayers.ContainsKey(player)) {
+                Logger.Info($"Invalidating player {player}");
+                _invalidPlayers[player] = true;
 
-            if (player == Player.One) {
-                _gameReader.Invalidate();
-                // TODO: Now what, will this class be recreated?
+                if (player == Player.One) {
+                    _gameReader.Invalidate();
+                    // TODO: Now what, will this class be recreated?
+                }
             }
         }
 
@@ -45,14 +47,17 @@ namespace CoHStats.Aggregator {
                     _detectedPlayers[player] = _gameReader.GetPlayerName(player);
 
                     if (string.IsNullOrEmpty(_detectedPlayers[player])) {
-                        Logger.Info($"Player {player} is not valid, not being added to dataset.");
+                        Logger.Info($"Player \"{player}\" is not valid, not being added to dataset.");
                         _invalidPlayers[player] = true;
+                    }
+                    else {
+                        Logger.Info($"Stored player {player} as \"{_detectedPlayers[player]}\"");
                     }
                 }
             }
 
             return _detectedPlayers.Keys
-                .Where(p => _invalidPlayers.ContainsKey(p))
+                .Where(p => !_invalidPlayers.ContainsKey(p))
                 .ToList();
         }
 

@@ -100,6 +100,8 @@
     <Compile Include="GraphConverter.cs" />
     <Compile Include="Integration\GraphMapper.cs" />
     <Compile Include="Integration\GraphNodeDto.cs" />
+    <Compile Include="Integration\JsonConverter.cs" />
+    <Compile Include="Integration\JsonExportFormat.cs" />
     <Compile Include="Integration\TimeStepArg.cs" />
     <Compile Include="Integration\UpdatePlayerArg.cs" />
     <Compile Include="Game\Player.cs" />

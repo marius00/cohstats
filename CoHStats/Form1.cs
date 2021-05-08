@@ -39,6 +39,7 @@ namespace CoHStats {
             _skipChromium = skipChromium;
             RecreateAggregators();
             _server.Start();
+            _server.OnClientConnect += (sender, args) => ExportData();
 
             if (_skipChromium) {
                 WindowState = FormWindowState.Minimized;
@@ -53,6 +54,21 @@ namespace CoHStats {
 
         }
 
+        class OuterJsonExportFormat {
+            public bool IsGameRunning { get; set; }
+            public List<JsonExportFormat> Data { get; set; }
+        }
+
+        private void ExportData() {
+            //_server.Write(_graphConverter.ToJson());
+
+            //return;
+            var toJson = new OuterJsonExportFormat {
+                IsGameRunning = _gameReader.IsActive,
+                Data = _aggregator.Export()
+            };
+            _server.Write(JsonConverter.Convert(toJson));
+        }
         private void Form1_Load(object sender, EventArgs e) {
             if (!_skipChromium) {
 #if DEBUG
@@ -89,8 +105,8 @@ namespace CoHStats {
                 if (_gameReader.IsActive) {
                     _graphConverter.Tick();
                     _aggregator.Tick();
-                    var json = _graphConverter.ToJson();
-                    _server.Write(json);
+
+                    ExportData();
                 }
 
                 // Reset cross games
