@@ -188,6 +188,11 @@ namespace CoHStats.Websocket {
                     for (int i = 0; i < msglen; ++i)
                         decoded[i] = (byte)(bytes[offset + i] ^ masks[i % 4]);
 
+                    if (decoded.Length == 2 && decoded[0] == 3 && decoded[1] == 233) {
+                        Logger.Info($"Client {data.Id} disconnected gracefully");
+                        _clients.TryRemove(data.Id, out _);
+                        return;
+                    }
                     string text = Encoding.UTF8.GetString(decoded);
 
                     Logger.Debug($"Received {text}");
