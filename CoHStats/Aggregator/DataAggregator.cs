@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.WebSockets;
@@ -14,13 +15,13 @@ namespace CoHStats.Aggregator {
      */
     public class DataAggregator {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(DataAggregator));
-        private readonly Dictionary<Player, List<PlayerStats>> _playerStats = new Dictionary<Player, List<PlayerStats>>();
-        private readonly Dictionary<Player, List<PlayerStats>> _cpuStats = new Dictionary<Player, List<PlayerStats>>();
-        private readonly Dictionary<Player, List<PlayerStats>> _playerDeltaStats = new Dictionary<Player, List<PlayerStats>>();
-        private readonly Dictionary<Player, List<PlayerStats>> _cpuDeltaStats = new Dictionary<Player, List<PlayerStats>>();
+        private readonly ConcurrentDictionary<Player, List<PlayerStats>> _playerStats = new ConcurrentDictionary<Player, List<PlayerStats>>();
+        private readonly ConcurrentDictionary<Player, List<PlayerStats>> _cpuStats = new ConcurrentDictionary<Player, List<PlayerStats>>();
+        private readonly ConcurrentDictionary<Player, List<PlayerStats>> _playerDeltaStats = new ConcurrentDictionary<Player, List<PlayerStats>>();
+        private readonly ConcurrentDictionary<Player, List<PlayerStats>> _cpuDeltaStats = new ConcurrentDictionary<Player, List<PlayerStats>>();
         private readonly GameReader _gameReader;
         private readonly PlayerService _playerService;
-        private const int DeltaOffset = 15; // How many seconds back should the delta count
+        private const int DeltaOffset = 8; // How many seconds back should the delta count
 
         public DataAggregator(GameReader gameReader, PlayerService playerService) {
             _gameReader = gameReader;
@@ -36,46 +37,42 @@ namespace CoHStats.Aggregator {
         /// If this is the first tick, the supplied entry will be returned
         /// </summary>
         /// <param name="stats">The stats from the current tick</param>
-        /// <param name="recentStats">List of the recent stats</param>
+        /// <param name="recentStats">List of the recent stats (totals)</param>
         /// <returns></returns>
         private PlayerStats GetDelta(PlayerStats stats, List<PlayerStats> recentStats) {
             if (recentStats.Count == 0) {
                 return stats;
             }
             else {
-                // -1 since we just inserted an entry prior to GetDelta being called
-                // Minus the offset again to get "recent kills over X seconds"
-                var offset = Math.Max(0, recentStats.Count - 1 - DeltaOffset);
+                // Minus the offset to get "recent kills over X seconds"
+                var offset = Math.Max(0, recentStats.Count - DeltaOffset);
 
-                var recent = recentStats[offset];
+                var prior = recentStats[offset];
                 return new PlayerStats {
-                    BuildingsLost = stats.BuildingsLost - recent.BuildingsLost,
-                    InfantryLost = stats.InfantryLost - recent.InfantryLost,
-                    VehiclesLost = stats.VehiclesLost - recent.VehiclesLost,
-                    BuildingsDestroyed = stats.BuildingsDestroyed - recent.BuildingsDestroyed,
-                    InfantryKilled = stats.InfantryKilled - recent.InfantryKilled,
-                    VehiclesDestroyed = stats.VehiclesDestroyed - recent.VehiclesDestroyed
+                    BuildingsLost = stats.BuildingsLost - prior.BuildingsLost,
+                    InfantryLost = stats.InfantryLost - prior.InfantryLost,
+                    VehiclesLost = stats.VehiclesLost - prior.VehiclesLost,
+                    BuildingsDestroyed = stats.BuildingsDestroyed - prior.BuildingsDestroyed,
+                    InfantryKilled = stats.InfantryKilled - prior.InfantryKilled,
+                    VehiclesDestroyed = stats.VehiclesDestroyed - prior.VehiclesDestroyed
                 };
             }
         }
         
         public void Tick() {
-            var playerCollections = new[] { _playerStats, _playerDeltaStats };
-            var cpuCollections = new[] { _cpuStats, _cpuDeltaStats };
-
             foreach (var player in _playerService.GetPlayers()) {
-                var stats = _gameReader.FetchStats(player);
-                if (stats == null) {
+                var tickStats = _gameReader.FetchStats(player);
+                if (tickStats == null) {
                     continue;
                 }
 
                 EnsureExists(player);
-                var active = _playerService.IsCpu(player) ? cpuCollections : playerCollections;
+                var totals = _playerService.IsCpu(player) ? _cpuStats : _playerStats;
+                var deltas = _playerService.IsCpu(player) ? _cpuDeltaStats : _playerDeltaStats;
+                var delta = GetDelta(tickStats, totals[player]);
 
-                active[0][player].Add(stats);
-
-                var delta = GetDelta(stats, active[0][player]);
-                active[1][player].Add(delta);
+                totals[player].Add(tickStats);
+                deltas[player].Add(delta);
             }
         }
 
@@ -105,18 +102,18 @@ namespace CoHStats.Aggregator {
         private void EnsureExists(Player player) {
             if (_playerService.IsCpu(player)) {
                 if (!_cpuStats.ContainsKey(player)) {
-                    _cpuStats.Add(player, new List<PlayerStats>());
+                    _cpuStats.TryAdd(player, new List<PlayerStats>());
                 }
                 if (!_cpuDeltaStats.ContainsKey(player)) {
-                    _cpuDeltaStats.Add(player, new List<PlayerStats>());
+                    _cpuDeltaStats.TryAdd(player, new List<PlayerStats>());
                 }
             }
             else {
                 if (!_playerStats.ContainsKey(player)) {
-                    _playerStats.Add(player, new List<PlayerStats>());
+                    _playerStats.TryAdd(player, new List<PlayerStats>());
                 }
                 if (!_playerDeltaStats.ContainsKey(player)) {
-                    _playerDeltaStats.Add(player, new List<PlayerStats>());
+                    _playerDeltaStats.TryAdd(player, new List<PlayerStats>());
                 }
             }
         }

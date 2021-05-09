@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,8 +11,8 @@ namespace CoHStats.Aggregator {
     public class PlayerService {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(PlayerService));
         private readonly GameReader _gameReader;
-        private readonly Dictionary<Player, bool> _invalidPlayers = new Dictionary<Player, bool>();
-        private readonly Dictionary<Player, string> _detectedPlayers = new Dictionary<Player, string>();
+        private readonly ConcurrentDictionary<Player, bool> _invalidPlayers = new ConcurrentDictionary<Player, bool>();
+        private readonly ConcurrentDictionary<Player, string> _detectedPlayers = new ConcurrentDictionary<Player, string>();
 
         public PlayerService(GameReader gameReader) {
             _gameReader = gameReader;

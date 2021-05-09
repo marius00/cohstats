@@ -24,12 +24,10 @@ namespace CoHStats {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(Form1));
         private readonly CefBrowserHandler _browser = new CefBrowserHandler();
         private readonly GameReader _gameReader = new GameReader();
-        private GraphConverter _graphConverter;
         private DataAggregator _aggregator;
         private readonly bool _showDevtools;
         private readonly bool _skipChromium;
         private FormWindowState _previousWindowState = FormWindowState.Normal;
-        private readonly int _resolution = 1;
         private readonly WebsocketServer _server = new WebsocketServer(59123);
         private string _url = $"{Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)}\\Resources\\index.html";
 
@@ -49,7 +47,6 @@ namespace CoHStats {
         }
 
         private void RecreateAggregators() {
-            _graphConverter = new GraphConverter(_gameReader, _resolution, new PlayerService(_gameReader));
             _aggregator = new DataAggregator(_gameReader, new PlayerService(_gameReader));
 
         }
@@ -103,7 +100,6 @@ namespace CoHStats {
                     Thread.CurrentThread.Name = "Data";
 
                 if (_gameReader.IsActive) {
-                    _graphConverter.Tick();
                     _aggregator.Tick();
 
                     ExportData();

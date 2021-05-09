@@ -33,7 +33,7 @@ export function CreateLinegraphDataSeries(dataset, subset) {
   return result;
 }
 
-export  function CreateLinegraphTitle(dataset) {
+export function CreateLinegraphTitle(dataset) {
   let result = [];
   for (let idx = 0; idx < dataset.length; idx++) {
     const player = dataset[idx];
