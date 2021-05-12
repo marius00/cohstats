@@ -13,7 +13,7 @@ namespace CoHStats.Websocket {
     class WebsocketServer : IDisposable {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(WebsocketServer));
         private readonly int _port;
-        private const int Timeout = 60000;
+        private const int Timeout = 30000;
         private readonly ConcurrentDictionary<string, ClientData> _clients = new ConcurrentDictionary<string, ClientData>();
         private Thread _listener;
         private Thread _processer;

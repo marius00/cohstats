@@ -285,7 +285,7 @@
 </div>
 </template>
 
-<style>
+<style scoped>
     @import "../assets/salesforce-lightning-design-system.min.css";
     @keyframes App-logo-spin {
         from {

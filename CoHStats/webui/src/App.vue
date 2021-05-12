@@ -2,7 +2,7 @@
     <h1 v-if="!isConnected" className="game-not-running">Not connected to the stats engine</h1>
     <div v-if="isConnected">
         <h1 v-if="!isGameRunning" className="game-not-running">The game does not appear to be running</h1>
-        <button v-if="!isGameRunning" v-on:click="swapData">Swap data</button>
+        <button v-if="!isGameRunning && !isEmbedded" v-on:click="swapData">Swap data</button>
 
         <div v-if="isGameRunning">
             <h2>{{deltaGraphTitle}}</h2>
@@ -22,11 +22,12 @@
   import _ from 'lodash';
   import LineGraph from './components/LineGraph.vue';
   import CheatSheet from './components/CheatSheet.vue';
-  import RegisterCallback from './websocket';
+  import RegisterCallback, {isEmbedded} from './websocket';
   import {LineChart} from "echarts/charts";
   import ECharts from 'echarts';
   import {DummyThree, DummyTwo} from "./TestData";
   import {CreateLinegraphDataSeries, CreateLinegraphTitle} from "./DataConversion";
+
 
 
 
@@ -39,10 +40,11 @@
     },
     data() {
       return {
-        isConnected: false,
+        isConnected: isEmbedded,
         isGameRunning: false,
         deltaGraphTitle: '',
         totalGraphTitle: '',
+        isEmbedded: isEmbedded,
 
         // See https://morioh.com/p/b18a8267ce29
         deltaGraphOptions: {
@@ -85,16 +87,14 @@
       }
     },
     created: function () {
-      RegisterCallback((event, data) => {
-        switch (event) {
-          case 'CONNECTED':
-            this.isConnected = true;
-            break;
-          case 'DISCONNECTED ':
-            this.isConnected = false;
-            break;
-          case 'DATA': {
-            var d = JSON.parse(data);
+      if (isEmbedded) {
+        console.log("Running inside embedded CefSharp, using magic data object");
+        setInterval(function () {
+          /* eslint-disable-next-line */
+          if (typeof data !== 'undefined' && typeof data.graphJson !== 'undefined') {
+            // TODO: Deduplicate this
+            /* eslint-disable-next-line */
+            var d = JSON.parse(data.graphJson);
             this.isGameRunning = !!d.isGameRunning;
             let seriesDelta = CreateLinegraphDataSeries(d.data, 'deltas');
             this.deltaGraphOptions = {...this.deltaGraphOptions, series: seriesDelta};
@@ -103,10 +103,33 @@
             let seriesTotal = CreateLinegraphDataSeries(d.data, 'stats');
             this.totalGraphOptions = {...this.totalGraphOptions, series: seriesTotal};
             this.totalGraphTitle = CreateLinegraphTitle(d.data);
-            break;
           }
-        }
-      })
+        }, 1000);
+      } else {
+        console.log("Running outside of embedded CefSharp, using websockets");
+        RegisterCallback((event, data) => {
+          switch (event) {
+            case 'CONNECTED':
+              this.isConnected = true;
+              break;
+            case 'DISCONNECTED ':
+              this.isConnected = false;
+              break;
+            case 'DATA': {
+              var d = JSON.parse(data);
+              this.isGameRunning = !!d.isGameRunning;
+              let seriesDelta = CreateLinegraphDataSeries(d.data, 'deltas');
+              this.deltaGraphOptions = {...this.deltaGraphOptions, series: seriesDelta};
+              this.deltaGraphTitle = CreateLinegraphTitle(d.data);
+
+              let seriesTotal = CreateLinegraphDataSeries(d.data, 'stats');
+              this.totalGraphOptions = {...this.totalGraphOptions, series: seriesTotal};
+              this.totalGraphTitle = CreateLinegraphTitle(d.data);
+              break;
+            }
+          }
+        })
+      }
     }
   };
 
@@ -115,7 +138,7 @@
 
 </script>
 
-<style>
+<style scoped>
     #app {
         font-family: Avenir, Helvetica, Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
@@ -129,5 +152,4 @@
     .game-not-running {
         color: red;
     }
-
 </style>

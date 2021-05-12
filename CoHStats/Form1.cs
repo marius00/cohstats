@@ -64,16 +64,20 @@ namespace CoHStats {
                 IsGameRunning = _gameReader.IsActive,
                 Data = _aggregator.Export()
             };
-            _server.Write(JsonConverter.Convert(toJson));
+            var json = JsonConverter.Convert(toJson);
+            
+            _browser.JsPojo.GraphJson = json;
+            _server.Write(json);
         }
+
         private void Form1_Load(object sender, EventArgs e) {
             if (!_skipChromium) {
 #if DEBUG
                 try {
                     using (var client = new WebClient()) {
                         Logger.Debug("Checking if NodeJS is running...");
-                        client.DownloadString("http://localhost:3000/");
-                        _url = "http://localhost:3000/";
+                        client.DownloadString("http://localhost:8080/");
+                        _url = "http://localhost:8080/";
                     }
                 }
                 catch (System.Net.WebException) {
@@ -125,6 +129,7 @@ namespace CoHStats {
 
             if (!_skipChromium) {
                 EnableAutoCloseTimer();
+                ExportData();
             }
         }
 

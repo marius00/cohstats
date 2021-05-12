@@ -26,7 +26,6 @@ namespace CoHStats.Aggregator {
         public DataAggregator(GameReader gameReader, PlayerService playerService) {
             _gameReader = gameReader;
             _playerService = playerService;
-            Tick();
         }
 
 

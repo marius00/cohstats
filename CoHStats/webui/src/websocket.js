@@ -1,19 +1,24 @@
-let state = 'DISCONNECTED';
-let wsUri = "ws://127.0.0.1:59123/";
-let websocket = createSocket();
-
-
+export const isEmbedded = typeof cefSharp === 'object';
 let gCallback = () => {
   // NOOP
 };
 
-setInterval(
-  () => {
-    if (state !== 'CONNECTED') {
-      console.debug("RECONNECTING..");
-      websocket = createSocket();
-    }
-  }, 5000);
+
+let state = 'DISCONNECTED';
+let wsUri = "ws://127.0.0.1:59123/";
+let websocket = undefined;
+
+if (!isEmbedded) {
+  websocket = createSocket();
+
+  setInterval(
+    () => {
+      if (state !== 'CONNECTED') {
+        console.debug("RECONNECTING..");
+        websocket = createSocket();
+      }
+    }, 5000);
+}
 
 function createSocket() {
   if (websocket) {
