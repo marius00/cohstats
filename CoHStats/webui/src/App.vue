@@ -4,7 +4,7 @@
         <h1 v-if="!isGameRunning" class="game-not-running">The game does not appear to be running</h1>
         <button v-if="!isGameRunning && !isEmbedded" v-on:click="swapData">Swap data</button>
 
-        <div v-if="isGameRunning">
+        <div>
             <h2>{{deltaGraphTitle}}</h2>
             <LineGraph :option="deltaGraphOptions" label="Recent combat" ref="chart"/>
 
@@ -25,10 +25,8 @@
   import RegisterCallback, {isEmbedded} from './websocket';
   import {LineChart} from "echarts/charts";
   import ECharts from 'echarts';
-  import {DummyThree, DummyTwo} from "./TestData";
+  // import {DummyThree, DummyTwo} from "./TestData";
   import {CreateLinegraphDataSeries, CreateLinegraphTitle} from "./DataConversion";
-
-
 
 
   const V = {
@@ -50,11 +48,11 @@
         deltaGraphOptions: {
           // TODO: Could be we need to inherit some default options here, tooltip stopped working once this was used.
           // See https://github.com/ecomfe/vue-echarts "const option = ref({"
-          series: CreateLinegraphDataSeries(DummyTwo.data, 'deltas'),
+          series: [],
           xAxis: {
             type: 'category',
             boundaryGap: false,
-            data: _.range(0, CreateLinegraphDataSeries(DummyThree.data, 'deltas')),
+            data: [],
             name: 'Seconds into the game'
           },
           yAxis: [
@@ -63,11 +61,11 @@
           ],
         },
         totalGraphOptions: {
-          series: CreateLinegraphDataSeries(DummyTwo.data, 'stats'),
+          series: [],
           xAxis: {
             type: 'category',
             boundaryGap: false,
-            data: _.range(0, CreateLinegraphDataSeries(DummyThree.data, 'stats')),
+            data: [],
             name: 'Seconds into the game'
           },
           yAxis: [
@@ -78,23 +76,46 @@
       }
     },
     methods: {
+      /*
       swapData: function () {
         // console.log(this.$refs.chart.refreshOption, (this.$refs.chart));
         this.deltaGraphOptions = {...this.deltaGraphOptions, series: CreateLinegraphDataSeries(DummyThree.data, 'deltas')};
         this.totalGraphOptions = {...this.totalGraphOptions, series: CreateLinegraphDataSeries(DummyThree.data, 'stats')};
         this.deltaGraphTitle = CreateLinegraphTitle(DummyThree.data);
         this.totalGraphTitle = CreateLinegraphTitle(DummyThree.data);
-      },
+      },*/
       setData: function (d) {
+        if (!d || !d.data)
+          return;
+
         this.isGameRunning = !!d.isGameRunning;
         let seriesDelta = CreateLinegraphDataSeries(d.data, 'deltas');
-        this.deltaGraphOptions = {...this.deltaGraphOptions, series: seriesDelta};
-        this.deltaGraphTitle = CreateLinegraphTitle(d.data);
+        const length = seriesDelta.length > 0 ? seriesDelta[0].data.length : 0;
+        this.deltaGraphOptions = {
+          ...this.deltaGraphOptions,
+          series: seriesDelta,
+          xAxis: {
+            type: 'category',
+            boundaryGap: false,
+            data: _.range(0, length),
+            name: 'Seconds into the game'
+          }
+        };
+        this.deltaGraphTitle = "Kills per second " + CreateLinegraphTitle(d.data);
+        console.log("Set delta graph to", seriesDelta, this.deltaGraphOptions.xAxis);
 
         let seriesTotal = CreateLinegraphDataSeries(d.data, 'stats');
-        this.totalGraphOptions = {...this.totalGraphOptions, series: seriesTotal};
-        this.totalGraphTitle = CreateLinegraphTitle(d.data);
-        console.log('M:Running:', this.isGameRunning, d);
+        this.totalGraphOptions = {
+          ...this.totalGraphOptions,
+          series: seriesTotal,
+          xAxis: {
+            type: 'category',
+            boundaryGap: false,
+            data: _.range(0, length),
+            name: 'Seconds into the game'
+          }
+        };
+        this.totalGraphTitle = "Total kills " + CreateLinegraphTitle(d.data);
       }
     },
     created: function () {
@@ -119,14 +140,16 @@
             case 'DISCONNECTED ':
               this.isConnected = false;
               break;
-            case 'DATA': {
-              var d = JSON.parse(socketData);
-              this.setData(d);
+            case 'DATA':
+              console.log("yayt data", this.setData);
+
+              this.setData(JSON.parse(socketData));
               break;
-            }
+
           }
-          console.log('S:Running:', event, this.isGameRunning, 'Data:', socketData, d);
-        })
+
+          console.debug('Type:', event, 'Data:', socketData);
+        });
       }
     }
   };

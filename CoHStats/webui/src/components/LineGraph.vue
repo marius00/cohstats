@@ -38,6 +38,7 @@
             text: this.label
           },
           tooltip: {
+            show: true,
             trigger: 'axis'
           },
           grid: {
@@ -65,6 +66,6 @@
 
 <style scoped>
     .chart {
-        height: 400px;
+        height: 300px;
     }
 </style>

@@ -42,11 +42,15 @@ namespace CoHStats.Websocket {
                 stream.Write(d, 0, d.Length);
             }
             catch (System.IO.IOException ex) {
-                Logger.Warn($"Error writing to client {clientDetails.Id}");
+                Logger.Warn($"Error writing to client {clientDetails.Id}", ex);
             }
         }
 
         private void StartListening() {
+            if (Thread.CurrentThread.Name == null) {
+                Thread.CurrentThread.Name = "NewClientListener";
+            }
+
             _server = new TcpListener(IPAddress.Parse("127.0.0.1"), _port);
             _server.Start();
 
@@ -57,6 +61,12 @@ namespace CoHStats.Websocket {
                     client.ReceiveTimeout = Timeout;
                     NetworkStream stream = client.GetStream();
 
+                    if (_clients.Count > 3) {
+                        Logger.Warn($"Client count is {_clients.Count}, rejecting connection attempt.");
+                        client.Close();
+                        continue;
+                    }
+
                     var c = new ClientData(Guid.NewGuid().ToString()) {
                         Client = client,
                         Stream = stream,
@@ -64,14 +74,21 @@ namespace CoHStats.Websocket {
                     };
 
                     _clients.TryAdd(c.Id, c);
+                    Logger.Debug($"Added client {c.Id}, numClients={_clients.Count}");
                 }
                 catch (System.Net.Sockets.SocketException ex) {
                     Logger.Info(ex.Message, ex);
                 }
+
+                Thread.Sleep(1);
             }
         }
 
         private void Processor() {
+            if (Thread.CurrentThread.Name == null) {
+                Thread.CurrentThread.Name = "MessageProcessor";
+            }
+
             while (_processor != null && _processor.IsAlive) {
                 foreach (var client in _clients.Values) {
                     Process(client);
@@ -106,7 +123,7 @@ namespace CoHStats.Websocket {
                 }
                 catch (System.IO.IOException ex) {
                     // Client disconnected
-                    Logger.Info($"Client {data.Id} disconnected");
+                    Logger.Info($"Client {data.Id} disconnected", ex);
                     _clients.TryRemove(data.Id, out _);
                 }
 
@@ -200,6 +217,7 @@ namespace CoHStats.Websocket {
                     Logger.Debug($"Received OpCode=`{(EOpcodeType)opcode}` Text=`{text}`");
                     OnReceived?.Invoke(this, new OnSocketReadEventArg {Id = data.Id, Content = text});
                     data.LastAck = DateTimeOffset.UtcNow;
+
                 }
                 else
                     Logger.Warn("mask bit not set");

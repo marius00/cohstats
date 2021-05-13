@@ -4,7 +4,6 @@ let gCallback = () => {
 };
 
 
-let state = 'DISCONNECTED';
 let wsUri = "ws://127.0.0.1:59123/";
 let websocket = undefined;
 
@@ -13,30 +12,29 @@ if (!isEmbedded) {
 
   setInterval(
     () => {
-      if (state !== 'CONNECTED') {
-        console.debug("RECONNECTING..");
+      if (!isConnected()) {
+        console.log("RECONNECTING..");
         websocket = createSocket();
       }
     }, 5000);
 }
 
+const isConnected = () => websocket && (websocket.readyState === WebSocket.OPEN || websocket.readyState === WebSocket.CONNECTING);
+
 function createSocket() {
-  if (websocket) {
-    if (websocket.readyState === WebSocket.OPEN || websocket.readyState === WebSocket.CONNECTING) {
-      websocket?.close();
-    }
+  console.log('CreateSocket');
+  if (websocket && (websocket.readyState === WebSocket.OPEN || websocket.readyState === WebSocket.CONNECTING)) {
+    websocket?.close();
   }
   websocket = new WebSocket(wsUri);
 
   websocket.onopen = function () {
     gCallback("CONNECTED", '');
     websocket.send("Client active");
-    state = 'CONNECTED';
   };
 
   websocket.onclose = function () {
     gCallback("DISCONNECTED", '');
-    state = 'DISCONNECTED';
   };
 
   websocket.onmessage = function (e) {
@@ -46,12 +44,16 @@ function createSocket() {
   // TODO: see into better 'close' logic? https://stackoverflow.com/questions/22431751/websocket-how-to-automatically-reconnect-after-it-dies
   websocket.onerror = function (e) {
     if (e && e.data)
-      console.log(JSON.stringify(e.data));
+      console.error(JSON.stringify(e.data));
+
+    websocket?.close();
   };
 
+  console.log("Socket created");
   return websocket;
 }
 
 export default function RegisterCallback(callback) {
   gCallback = callback;
+  console.log("Websocket call registered");
 }

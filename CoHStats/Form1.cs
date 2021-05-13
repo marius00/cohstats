@@ -71,6 +71,10 @@ namespace CoHStats {
         }
 
         private void Form1_Load(object sender, EventArgs e) {
+            if (Thread.CurrentThread.Name == null) {
+                Thread.CurrentThread.Name = "UI";
+            }
+
             if (!_skipChromium) {
 #if DEBUG
                 try {
@@ -105,7 +109,6 @@ namespace CoHStats {
 
                 if (_gameReader.IsActive) {
                     _aggregator.Tick();
-
                     ExportData();
                 }
 
@@ -131,6 +134,12 @@ namespace CoHStats {
                 EnableAutoCloseTimer();
                 ExportData();
             }
+
+
+#if DEBUG
+            _aggregator.AddDebugData();
+            ExportData();
+#endif
         }
 
         /// <summary>

@@ -21,7 +21,7 @@ export function CreateLinegraphDataSeries(dataset, subset) {
       itemStyle: {
         normal: {
           lineStyle: {
-            color: '#ff8602',
+            color: '#ff8602', // TODO: Add a mix of red ish colors here
             width: 2,
             type: 'dotted'
           }

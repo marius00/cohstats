@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using log4net;
@@ -18,6 +19,10 @@ namespace CoHStats {
         /// </summary>
         [STAThread]
         static void Main(string[] args) {
+            if (Thread.CurrentThread.Name == null) {
+                Thread.CurrentThread.Name = "Main";
+            }
+
             var version = Assembly.GetExecutingAssembly().GetName().Version;
             DateTime buildDate = new DateTime(2000, 1, 1)
                 .AddDays(version.Build)
