@@ -9,15 +9,16 @@ using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace CoHStats.Websocket {
-
     class WebsocketServer : IDisposable {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(WebsocketServer));
         private readonly int _port;
         private const int Timeout = 30000;
+
         private readonly ConcurrentDictionary<string, ClientData> _clients = new ConcurrentDictionary<string, ClientData>();
+
         private Thread _listener;
-        private Thread _processer;
-        private TcpListener server;
+        private Thread _processor;
+        private TcpListener _server;
 
         public event EventHandler OnReceived;
         public event EventHandler OnClientConnect;
@@ -30,11 +31,9 @@ namespace CoHStats.Websocket {
             foreach (var client in _clients.Values) {
                 Write(client, data);
             }
-
         }
 
         public void Write(ClientData clientDetails, string data) {
-            TcpClient client = clientDetails.Client;
             NetworkStream stream = clientDetails.Stream;
 
             Logger.Debug($"Sending data to {clientDetails.Id}");
@@ -47,13 +46,13 @@ namespace CoHStats.Websocket {
             }
         }
 
-            private void StartListening() {
-            server = new TcpListener(IPAddress.Parse("127.0.0.1"), _port);
-            server.Start();
+        private void StartListening() {
+            _server = new TcpListener(IPAddress.Parse("127.0.0.1"), _port);
+            _server.Start();
 
             while (_listener != null && _listener.IsAlive) {
                 try {
-                    TcpClient client = server.AcceptTcpClient(); // TODO: Exception thrown: 'System.Net.Sockets.SocketException' in System.dll -- when closing the program
+                    TcpClient client = _server.AcceptTcpClient(); // TODO: Exception thrown: 'System.Net.Sockets.SocketException' in System.dll -- when closing the program
                     client.SendTimeout = Timeout;
                     client.ReceiveTimeout = Timeout;
                     NetworkStream stream = client.GetStream();
@@ -65,15 +64,15 @@ namespace CoHStats.Websocket {
                     };
 
                     _clients.TryAdd(c.Id, c);
-                } catch (System.Net.Sockets.SocketException ex) {
+                }
+                catch (System.Net.Sockets.SocketException ex) {
                     Logger.Info(ex.Message, ex);
                 }
             }
-
         }
 
         private void Processor() {
-            while (_processer != null && _processer.IsAlive) {
+            while (_processor != null && _processor.IsAlive) {
                 foreach (var client in _clients.Values) {
                     Process(client);
                 }
@@ -91,8 +90,8 @@ namespace CoHStats.Websocket {
             _listener = new Thread(StartListening);
             _listener.Start();
 
-            _processer = new Thread(Processor);
-            _processer.Start();
+            _processor = new Thread(Processor);
+            _processor.Start();
         }
 
         public void Process(ClientData data) {
@@ -110,6 +109,7 @@ namespace CoHStats.Websocket {
                     Logger.Info($"Client {data.Id} disconnected");
                     _clients.TryRemove(data.Id, out _);
                 }
+
                 data.LastAck = DateTimeOffset.UtcNow;
             }
 
@@ -156,11 +156,12 @@ namespace CoHStats.Websocket {
                     return;
                 }
 
-                OnClientConnect?.Invoke(this, new OnSocketReadEventArg { Id = data.Id });
+                OnClientConnect?.Invoke(this, new OnSocketReadEventArg {Id = data.Id});
             }
             else {
                 bool fin = (bytes[0] & 0b10000000) != 0,
-                    mask = (bytes[1] & 0b10000000) != 0; // must be true, "All messages from the client to the server have this bit set"
+                    mask = (bytes[1] & 0b10000000) !=
+                           0; // must be true, "All messages from the client to the server have this bit set"
 
                 int opcode = bytes[0] & 0b00001111, // expecting 1 - text message
                     msglen = bytes[1] - 128, // & 0111 1111
@@ -168,7 +169,7 @@ namespace CoHStats.Websocket {
 
                 if (msglen == 126) {
                     // was ToUInt16(bytes, offset) but the result is incorrect
-                    msglen = BitConverter.ToUInt16(new byte[] { bytes[3], bytes[2] }, 0);
+                    msglen = BitConverter.ToUInt16(new byte[] {bytes[3], bytes[2]}, 0);
                     offset = 4;
                 }
                 else if (msglen == 127) {
@@ -182,21 +183,22 @@ namespace CoHStats.Websocket {
                     Logger.Debug("msglen == 0");
                 else if (mask) {
                     byte[] decoded = new byte[msglen];
-                    byte[] masks = new byte[4] { bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3] };
+                    byte[] masks = new byte[4] {bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]};
                     offset += 4;
 
                     for (int i = 0; i < msglen; ++i)
-                        decoded[i] = (byte)(bytes[offset + i] ^ masks[i % 4]);
+                        decoded[i] = (byte) (bytes[offset + i] ^ masks[i % 4]);
 
                     if (decoded.Length == 2 && decoded[0] == 3 && decoded[1] == 233) {
                         Logger.Info($"Client {data.Id} disconnected gracefully");
                         _clients.TryRemove(data.Id, out _);
                         return;
                     }
+
                     string text = Encoding.UTF8.GetString(decoded);
 
-                    Logger.Debug($"Received {text}");
-                    OnReceived?.Invoke(this, new OnSocketReadEventArg { Id = data.Id, Content = text });
+                    Logger.Debug($"Received OpCode=`{(EOpcodeType)opcode}` Text=`{text}`");
+                    OnReceived?.Invoke(this, new OnSocketReadEventArg {Id = data.Id, Content = text});
                     data.LastAck = DateTimeOffset.UtcNow;
                 }
                 else
@@ -224,6 +226,7 @@ namespace CoHStats.Websocket {
             /* Denotes a pong */
             Pong = 10
         }
+
         private static byte[] GetFrameFromString(string Message, EOpcodeType Opcode = EOpcodeType.Text) {
             byte[] response;
             byte[] bytesRaw = Encoding.Default.GetBytes(Message);
@@ -232,27 +235,27 @@ namespace CoHStats.Websocket {
             int indexStartRawData = -1;
             int length = bytesRaw.Length;
 
-            frame[0] = (byte)(128 + (int)Opcode);
+            frame[0] = (byte) (128 + (int) Opcode);
             if (length <= 125) {
-                frame[1] = (byte)length;
+                frame[1] = (byte) length;
                 indexStartRawData = 2;
             }
             else if (length >= 126 && length <= 65535) {
-                frame[1] = (byte)126;
-                frame[2] = (byte)((length >> 8) & 255);
-                frame[3] = (byte)(length & 255);
+                frame[1] = (byte) 126;
+                frame[2] = (byte) ((length >> 8) & 255);
+                frame[3] = (byte) (length & 255);
                 indexStartRawData = 4;
             }
             else {
-                frame[1] = (byte)127;
-                frame[2] = (byte)((length >> 56) & 255);
-                frame[3] = (byte)((length >> 48) & 255);
-                frame[4] = (byte)((length >> 40) & 255);
-                frame[5] = (byte)((length >> 32) & 255);
-                frame[6] = (byte)((length >> 24) & 255);
-                frame[7] = (byte)((length >> 16) & 255);
-                frame[8] = (byte)((length >> 8) & 255);
-                frame[9] = (byte)(length & 255);
+                frame[1] = (byte) 127;
+                frame[2] = (byte) ((length >> 56) & 255);
+                frame[3] = (byte) ((length >> 48) & 255);
+                frame[4] = (byte) ((length >> 40) & 255);
+                frame[5] = (byte) ((length >> 32) & 255);
+                frame[6] = (byte) ((length >> 24) & 255);
+                frame[7] = (byte) ((length >> 16) & 255);
+                frame[8] = (byte) ((length >> 8) & 255);
+                frame[9] = (byte) (length & 255);
 
                 indexStartRawData = 10;
             }
@@ -273,16 +276,17 @@ namespace CoHStats.Websocket {
                 reponseIdx++;
             }
 
+            Logger.Debug($"Produced Frame(Message:`{Message}`, OpCode=`{Opcode}`)");
             return response;
         }
 
         public void Dispose() {
-            server.Stop();
+            _server.Stop();
             // _listener?.Abort();
             _listener = null;
 
-            // _processer?.Abort();
-            _processer = null;
+            // _processor?.Abort();
+            _processor = null;
         }
     }
 }
