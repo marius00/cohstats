@@ -1,7 +1,7 @@
 <template>
-    <h1 v-if="!isConnected" className="game-not-running">Not connected to the stats engine</h1>
+    <h1 v-if="!isConnected" class="game-not-running">Not connected to the stats engine</h1>
     <div v-if="isConnected">
-        <h1 v-if="!isGameRunning" className="game-not-running">The game does not appear to be running</h1>
+        <h1 v-if="!isGameRunning" class="game-not-running">The game does not appear to be running</h1>
         <button v-if="!isGameRunning && !isEmbedded" v-on:click="swapData">Swap data</button>
 
         <div v-if="isGameRunning">
@@ -84,30 +84,34 @@
         this.totalGraphOptions = {...this.totalGraphOptions, series: CreateLinegraphDataSeries(DummyThree.data, 'stats')};
         this.deltaGraphTitle = CreateLinegraphTitle(DummyThree.data);
         this.totalGraphTitle = CreateLinegraphTitle(DummyThree.data);
+      },
+      setData: function (d) {
+        this.isGameRunning = !!d.isGameRunning;
+        let seriesDelta = CreateLinegraphDataSeries(d.data, 'deltas');
+        this.deltaGraphOptions = {...this.deltaGraphOptions, series: seriesDelta};
+        this.deltaGraphTitle = CreateLinegraphTitle(d.data);
+
+        let seriesTotal = CreateLinegraphDataSeries(d.data, 'stats');
+        this.totalGraphOptions = {...this.totalGraphOptions, series: seriesTotal};
+        this.totalGraphTitle = CreateLinegraphTitle(d.data);
+        console.log('M:Running:', this.isGameRunning, d);
       }
     },
     created: function () {
       if (isEmbedded) {
         console.log("Running inside embedded CefSharp, using magic data object");
-        setInterval(function () {
+        setInterval(() => {
           /* eslint-disable-next-line */
           if (typeof data !== 'undefined' && typeof data.graphJson !== 'undefined') {
             // TODO: Deduplicate this
             /* eslint-disable-next-line */
             var d = JSON.parse(data.graphJson);
-            this.isGameRunning = !!d.isGameRunning;
-            let seriesDelta = CreateLinegraphDataSeries(d.data, 'deltas');
-            this.deltaGraphOptions = {...this.deltaGraphOptions, series: seriesDelta};
-            this.deltaGraphTitle = CreateLinegraphTitle(d.data);
-
-            let seriesTotal = CreateLinegraphDataSeries(d.data, 'stats');
-            this.totalGraphOptions = {...this.totalGraphOptions, series: seriesTotal};
-            this.totalGraphTitle = CreateLinegraphTitle(d.data);
+            this.setData(d);
           }
         }, 1000);
       } else {
         console.log("Running outside of embedded CefSharp, using websockets");
-        RegisterCallback((event, data) => {
+        RegisterCallback((event, socketData) => {
           switch (event) {
             case 'CONNECTED':
               this.isConnected = true;
@@ -116,18 +120,12 @@
               this.isConnected = false;
               break;
             case 'DATA': {
-              var d = JSON.parse(data);
-              this.isGameRunning = !!d.isGameRunning;
-              let seriesDelta = CreateLinegraphDataSeries(d.data, 'deltas');
-              this.deltaGraphOptions = {...this.deltaGraphOptions, series: seriesDelta};
-              this.deltaGraphTitle = CreateLinegraphTitle(d.data);
-
-              let seriesTotal = CreateLinegraphDataSeries(d.data, 'stats');
-              this.totalGraphOptions = {...this.totalGraphOptions, series: seriesTotal};
-              this.totalGraphTitle = CreateLinegraphTitle(d.data);
+              var d = JSON.parse(socketData);
+              this.setData(d);
               break;
             }
           }
+          console.log('S:Running:', event, this.isGameRunning, 'Data:', socketData, d);
         })
       }
     }
