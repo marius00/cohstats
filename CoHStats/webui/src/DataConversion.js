@@ -1,6 +1,8 @@
 import _ from 'lodash';
 
 export function CreateLinegraphDataSeries(dataset, subset) {
+  const lossColors = ['#ff0000','#ff560d','#ff5a58','#ff57aa'];
+  let lossIdx = 0;
   let result = [];
   for (let idx = 0; idx < dataset.length; idx++) {
     const player = dataset[idx];
@@ -21,7 +23,7 @@ export function CreateLinegraphDataSeries(dataset, subset) {
       itemStyle: {
         normal: {
           lineStyle: {
-            color: '#ff8602', // TODO: Add a mix of red ish colors here
+            color: lossColors[lossIdx++],
             width: 2,
             type: 'dotted'
           }

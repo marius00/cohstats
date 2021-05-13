@@ -34,9 +34,6 @@
     data() {
       return {
         option: {
-          title: {
-            text: this.label
-          },
           tooltip: {
             show: true,
             trigger: 'axis'

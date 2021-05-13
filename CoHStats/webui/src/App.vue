@@ -5,11 +5,9 @@
         <button v-if="!isGameRunning && !isEmbedded" v-on:click="swapData">Swap data</button>
 
         <div>
-            <h2>{{deltaGraphTitle}}</h2>
             <LineGraph :option="deltaGraphOptions" label="Recent combat" ref="chart"/>
 
 
-            <h2>{{totalGraphTitle}}</h2>
             <LineGraph :option="totalGraphOptions" label="Entire game" />
 
         </div>
@@ -24,8 +22,6 @@
   import CheatSheet from './components/CheatSheet.vue';
   import RegisterCallback, {isEmbedded} from './websocket';
   import {LineChart} from "echarts/charts";
-  import ECharts from 'echarts';
-  // import {DummyThree, DummyTwo} from "./TestData";
   import {CreateLinegraphDataSeries, CreateLinegraphTitle} from "./DataConversion";
 
 
@@ -34,20 +30,16 @@
     components: {
       CheatSheet,
       LineGraph,
-      LineChart, ECharts // Does nothing
+      LineChart
     },
     data() {
       return {
         isConnected: isEmbedded,
         isGameRunning: false,
-        deltaGraphTitle: '',
-        totalGraphTitle: '',
         isEmbedded: isEmbedded,
 
         // See https://morioh.com/p/b18a8267ce29
         deltaGraphOptions: {
-          // TODO: Could be we need to inherit some default options here, tooltip stopped working once this was used.
-          // See https://github.com/ecomfe/vue-echarts "const option = ref({"
           series: [],
           xAxis: {
             type: 'category',
@@ -59,6 +51,18 @@
             {type: 'value', name: 'Losses'},
             {type: 'value', name: 'Kills'}
           ],
+          tooltip: {
+            show: true,
+            trigger: 'axis'
+          },
+          grid: {
+            left: '0%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+          },
+          legend: {
+          },
         },
         totalGraphOptions: {
           series: [],
@@ -72,6 +76,16 @@
             {type: 'value', name: 'Losses'},
             {type: 'value', name: 'Kills'}
           ],
+          tooltip: {
+            show: true,
+            trigger: 'axis'
+          },
+          grid: {
+            left: '0%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+          },
         }
       }
     },
@@ -81,7 +95,6 @@
         // console.log(this.$refs.chart.refreshOption, (this.$refs.chart));
         this.deltaGraphOptions = {...this.deltaGraphOptions, series: CreateLinegraphDataSeries(DummyThree.data, 'deltas')};
         this.totalGraphOptions = {...this.totalGraphOptions, series: CreateLinegraphDataSeries(DummyThree.data, 'stats')};
-        this.deltaGraphTitle = CreateLinegraphTitle(DummyThree.data);
         this.totalGraphTitle = CreateLinegraphTitle(DummyThree.data);
       },*/
       setData: function (d) {
@@ -99,9 +112,11 @@
             boundaryGap: false,
             data: _.range(0, length),
             name: 'Seconds into the game'
-          }
+          },
+          title: {
+            text: "Kills per second " + CreateLinegraphTitle(d.data)
+          },
         };
-        this.deltaGraphTitle = "Kills per second " + CreateLinegraphTitle(d.data);
         console.log("Set delta graph to", seriesDelta, this.deltaGraphOptions.xAxis);
 
         let seriesTotal = CreateLinegraphDataSeries(d.data, 'stats');
@@ -113,9 +128,11 @@
             boundaryGap: false,
             data: _.range(0, length),
             name: 'Seconds into the game'
-          }
+          },
+          title: {
+            text: "Total kills " + CreateLinegraphTitle(d.data)
+          },
         };
-        this.totalGraphTitle = "Total kills " + CreateLinegraphTitle(d.data);
       }
     },
     created: function () {
