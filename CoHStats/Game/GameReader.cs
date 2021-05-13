@@ -147,6 +147,10 @@ namespace CoHStats.Game {
             }
             catch (ArgumentException ex) {
                 Logger.Warn(ex.Message, ex);
+                if (player == Player.One) {
+                    Logger.Warn("Error reading player one, invalidating instance");
+                    _ptr = 0;
+                }
                 return null;
             }
         }
