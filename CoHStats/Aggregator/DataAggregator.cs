@@ -59,23 +59,25 @@ namespace CoHStats.Aggregator {
         }
 
 #if DEBUG
+// TODO: Make a mock GameHandler or something instead of polluting real code
         public void AddDebugData() {
-            EnsureExists(Player.One);
+            /*EnsureExists(Player.One);
             int[] numKills = new[] { 0, 0, 0, 0, 5, 15, 18, 19, 20, 21, 25, 30, 31, 32, 33, 34, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35 };
             int[] numLosses= new[] { 0, 0, 0, 2, 4, 4, 4, 4, 13, 13, 14, 14, 15, 15, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22 };
             for (int i = 0; i < numLosses.Length; i++) {
                 var s = new PlayerStats {
                     InfantryLost = numLosses[i],
                     InfantryKilled = numKills[i],
+                    BuildingsLost = i
                 };
 
-                _playerStats[Player.One].Add(s);
                 _playerDeltaStats[Player.One].Add(GetDelta(s, _playerStats[Player.One]));
-            }
+                _playerStats[Player.One].Add(s);
+            }*/
         }
 
         private void AddDebugData(List<JsonExportFormat> exports) {
-            if (_playerService.GetPlayers().Count == 0 && _playerStats.Count > 0 && _playerStats[Player.One].Count > 0) {
+            /*if (_playerService.GetPlayers().Count == 0 && _playerStats.Count > 0 && _playerStats[Player.One].Count > 0) {
                 EnsureExists(Player.One);
 
                 exports.Add(new JsonExportFormat {
@@ -83,7 +85,7 @@ namespace CoHStats.Aggregator {
                     Stats = _playerStats[Player.One].ToList(),
                     Deltas = _playerDeltaStats[Player.One].ToList() // Copy to prevent mutation during serialization
                 });
-            }
+            }*/
         }
 #else
         private void AddDebugData(List<JsonExportFormat> exports) {}
@@ -93,8 +95,13 @@ namespace CoHStats.Aggregator {
             foreach (var player in _playerService.GetPlayers()) {
                 var tickStats = _gameReader.FetchStats(player);
                 if (tickStats == null) {
+                    if (player == Player.One) {
+                        _gameReader.Invalidate();
+                    }
                     continue;
                 }
+
+                
 
                 EnsureExists(player);
                 var totals = _playerService.IsCpu(player) ? _cpuStats : _playerStats;

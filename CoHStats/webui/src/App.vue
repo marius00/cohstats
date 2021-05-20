@@ -22,7 +22,8 @@
   import CheatSheet from './components/CheatSheet.vue';
   import RegisterCallback, {isEmbedded} from './websocket';
   import {LineChart} from "echarts/charts";
-  import {CreateLinegraphDataSeries, CreateLinegraphTitle} from "./DataConversion";
+  import {CreateLinegraphDataSeries, CreateLinegraphTitle} from "./logic/DataConversion";
+  import {WarnIfLostBuilding} from "./logic/BuildingLostWarning";
 
 
   const V = {
@@ -56,7 +57,7 @@
             trigger: 'axis'
           },
           grid: {
-            left: '0%',
+            left: '3%',
             right: '4%',
             bottom: '3%',
             containLabel: true
@@ -133,6 +134,8 @@
             text: "Total kills " + CreateLinegraphTitle(d.data)
           },
         };
+
+        WarnIfLostBuilding(d.data);
       }
     },
     created: function () {

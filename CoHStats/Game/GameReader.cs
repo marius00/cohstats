@@ -135,6 +135,10 @@ namespace CoHStats.Game {
                 int numVehiclesLost = ReadOffset(player, GameOffsets.VehiclesLost);
                 int numBuildingsLost = ReadOffset(player, GameOffsets.BuildingsLost);
 
+                // Game probably closed, reading garbage data.
+                if (numInfantryKills > 10000 || numVehicleKills > 10000 || numBuildingsDestroyed > 10000)
+                    return null;
+
                 return new PlayerStats {
                     InfantryKilled = numInfantryKills,
                     VehiclesDestroyed = numVehicleKills,
