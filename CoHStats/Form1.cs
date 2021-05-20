@@ -1,18 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using CefSharp;
 using CoHStats.Aggregator;
 using CoHStats.Game;
 using CoHStats.Integration;
@@ -48,7 +41,6 @@ namespace CoHStats {
 
         private void RecreateAggregators() {
             _aggregator = new DataAggregator(_gameReader, new PlayerService(_gameReader));
-
         }
 
         class OuterJsonExportFormat {
@@ -65,7 +57,7 @@ namespace CoHStats {
                 Data = _aggregator.Export()
             };
             var json = JsonConverter.Convert(toJson);
-            
+
             _browser.JsPojo.GraphJson = json;
             _server.Write(json);
         }

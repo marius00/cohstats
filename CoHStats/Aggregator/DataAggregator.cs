@@ -95,9 +95,7 @@ namespace CoHStats.Aggregator {
             foreach (var player in _playerService.GetPlayers()) {
                 var tickStats = _gameReader.FetchStats(player);
                 if (tickStats == null) {
-                    if (player == Player.One) {
-                        _gameReader.Invalidate();
-                    }
+                    _playerService.Invalidate(player);
                     continue;
                 }
 

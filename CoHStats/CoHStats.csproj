@@ -97,7 +97,6 @@
     <Compile Include="Game\GameOffsets.cs" />
     <Compile Include="Game\GameReader.cs" />
     <Compile Include="Game\Util.cs" />
-    <Compile Include="GraphConverter.cs" />
     <Compile Include="Integration\GraphMapper.cs" />
     <Compile Include="Integration\GraphNodeDto.cs" />
     <Compile Include="Integration\JsonConverter.cs" />
