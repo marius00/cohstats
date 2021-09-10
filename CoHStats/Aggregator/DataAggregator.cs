@@ -21,7 +21,7 @@ namespace CoHStats.Aggregator {
         private readonly ConcurrentDictionary<Player, List<PlayerStats>> _cpuDeltaStats = new ConcurrentDictionary<Player, List<PlayerStats>>();
         private readonly GameReader _gameReader;
         private readonly PlayerService _playerService;
-        private const int DeltaOffset = 8; // How many seconds back should the delta count
+        private const int DeltaOffset = 15; // How many seconds back should the delta count
 
         public DataAggregator(GameReader gameReader, PlayerService playerService) {
             _gameReader = gameReader;

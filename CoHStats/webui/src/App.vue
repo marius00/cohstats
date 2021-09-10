@@ -2,18 +2,16 @@
     <h1 v-if="!isConnected" class="game-not-running">Not connected to the stats engine</h1>
     <div v-if="isConnected">
         <h1 v-if="!isGameRunning" class="game-not-running">The game does not appear to be running</h1>
-        <button v-if="!isGameRunning && !isEmbedded" v-on:click="swapData">Swap data</button>
 
         <div>
             <LineGraph :option="deltaGraphOptions" label="Recent combat" ref="chart"/>
-
-
             <LineGraph :option="totalGraphOptions" label="Entire game" />
 
         </div>
     </div>
 
     <CheatSheet />
+    <button v-if="!isGameRunning && !isEmbedded" v-on:click="swapData">Swap data</button>
 </template>
 
 <script>
@@ -24,6 +22,7 @@
   import {LineChart} from "echarts/charts";
   import {CreateLinegraphDataSeries, CreateLinegraphTitle} from "./logic/DataConversion";
   import {WarnIfLostBuilding} from "./logic/BuildingLostWarning";
+  import {DummyThree, DummyTwo, DummyDataset} from "./TestData";
 
 
   const V = {
@@ -49,7 +48,6 @@
             name: 'Seconds into the game'
           },
           yAxis: [
-            {type: 'value', name: 'Losses'},
             {type: 'value', name: 'Kills'}
           ],
           tooltip: {
@@ -74,7 +72,6 @@
             name: 'Seconds into the game'
           },
           yAxis: [
-            {type: 'value', name: 'Losses'},
             {type: 'value', name: 'Kills'}
           ],
           tooltip: {
@@ -87,17 +84,20 @@
             bottom: '3%',
             containLabel: true
           },
+          legend: {
+          },
         }
       }
     },
     methods: {
-      /*
+
       swapData: function () {
         // console.log(this.$refs.chart.refreshOption, (this.$refs.chart));
         this.deltaGraphOptions = {...this.deltaGraphOptions, series: CreateLinegraphDataSeries(DummyThree.data, 'deltas')};
         this.totalGraphOptions = {...this.totalGraphOptions, series: CreateLinegraphDataSeries(DummyThree.data, 'stats')};
         this.totalGraphTitle = CreateLinegraphTitle(DummyThree.data);
-      },*/
+        this.isConnected = true;
+      },
       setData: function (d) {
         if (!d || !d.data)
           return;
@@ -136,6 +136,7 @@
         };
 
         WarnIfLostBuilding(d.data);
+        console.log(JSON.stringify(d));
       }
     },
     created: function () {
@@ -161,8 +162,6 @@
               this.isConnected = false;
               break;
             case 'DATA':
-              console.log("yayt data", this.setData);
-
               this.setData(JSON.parse(socketData));
               break;
 
@@ -175,6 +174,7 @@
   };
 
   export default V;
+
 
 
 </script>

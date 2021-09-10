@@ -11,7 +11,6 @@ export function CreateLinegraphDataSeries(dataset, subset) {
       name: `${player.name} - Kills`,
       type: 'line',
       data: _.map(player[subset], (p) => p.totalKilled),
-      yAxisIndex: 1,
       smooth: true
     });
 
@@ -20,15 +19,15 @@ export function CreateLinegraphDataSeries(dataset, subset) {
       type: 'line',
       data: _.map(player[subset], (p) => p.infantryLost + p.vehiclesLost + p.buildingsLost),
       smooth: true,
-      itemStyle: {
-        normal: {
-          lineStyle: {
-            color: lossColors[lossIdx++],
-            width: 2,
-            type: 'dotted'
-          }
-        }
-      }
+      lineStyle: {
+        color: lossColors[lossIdx++],
+        width: 2,
+        type: 'dotted',
+        opacity: 0.10,
+      },
+      areaStyle: {
+        opacity: 0.15,
+      },
     });
   }
 
@@ -37,6 +36,7 @@ export function CreateLinegraphDataSeries(dataset, subset) {
 
 export function CreateLinegraphTitle(dataset) {
   let result = [];
+  console.log('yada', dataset);
   for (let idx = 0; idx < dataset.length; idx++) {
     const player = dataset[idx];
     if (player.stats.length > 0)
@@ -44,6 +44,8 @@ export function CreateLinegraphTitle(dataset) {
     else
       result.push(`${player.name}`);
   }
+
+  console.log('resulty', result);
 
   return result.join(' - ');
 }
